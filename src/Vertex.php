@@ -10,7 +10,7 @@ class Vertex
     /**
      * @var mixed
      */
-    private mixed $id;
+    private ?int $id;
     /**
      * @var array
      */
@@ -38,7 +38,7 @@ class Vertex
     /**
      * @return mixed|null
      */
-    public function getId(): mixed
+    public function getId(): int
     {
         return $this->id;
     }
@@ -69,5 +69,34 @@ class Vertex
         if ($edge->getGraph() !== $this->getGraph())
             throw new \Exception('Edge & Vertex have to be within the same graph');
         $this->edges[$edge->getId()] = $edge;
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasEdge($id): bool
+    {
+        return array_key_exists($id, $this->edges);
+    }
+
+    /**
+     * @return int
+     */
+    public function countEdges(): int
+    {
+        return count($this->edges);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function removeEdge($id): bool
+    {
+        if (!$this->hasEdge($id))
+            return false;
+        unset($this->edges[$id]);
+        return true;
     }
 }
