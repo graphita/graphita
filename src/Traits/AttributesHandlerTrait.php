@@ -20,9 +20,9 @@ trait AttributesHandlerTrait
     /**
      * @param $key
      * @param $default
-     * @return mixed
+     * @return mixed|null
      */
-    public function getAttribute($key, $default = null): mixed
+    public function getAttribute($key, $default = null)
     {
         return $this->attributes[$key] ?? $default;
     }
