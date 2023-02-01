@@ -18,6 +18,11 @@ abstract class AbstractEdge
     private Graph $graph;
 
     /**
+     * @var array
+     */
+    private array $vertices = array();
+
+    /**
      * @var Vertex
      */
     private Vertex $source;
@@ -40,6 +45,7 @@ abstract class AbstractEdge
         $this->id = uniqid($source->getId() . '-' . $destination->getId() . '-');
         $this->source = $source;
         $this->destination = $destination;
+        array_push($this->vertices, $this->source, $this->destination);
         $this->graph = $graph;
         $this->setAttributes($attributes);
     }
@@ -58,5 +64,13 @@ abstract class AbstractEdge
     public function getGraph(): Graph
     {
         return $this->graph;
+    }
+
+    /**
+     * @return array
+     */
+    public function getVertices(): array
+    {
+        return $this->vertices;
     }
 }

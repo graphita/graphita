@@ -170,6 +170,10 @@ class Graph
     {
         if (!$this->hasEdge($id))
             return false;
+        $vertices = $this->edges[$id]->getVertices();
+        array_map(function ($vertex) use ($id) {
+            $vertex->removeEdge($id);
+        }, $vertices);
         unset($this->edges[$id]);
         return true;
     }
