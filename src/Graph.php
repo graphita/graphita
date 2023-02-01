@@ -126,17 +126,14 @@ class Graph
      * @throws Exception
      */
     public function createUndirectedEdge(
-        $id,
         Vertex $sourceVertex,
         Vertex $destinationVertex,
         array $attributes = array()
     ): UndirectedEdge
     {
-        if ($this->hasEdge($id))
-            throw new Exception('Edge exist !');
         if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
             throw new Exception('Vertex must be in graph !');
-        $edge = new UndirectedEdge($id, $sourceVertex, $destinationVertex, $this, $attributes);
+        $edge = new UndirectedEdge($sourceVertex, $destinationVertex, $this, $attributes);
         $sourceVertex->addEdge($edge);
         $destinationVertex->addEdge($edge);
         $this->edges[$edge->getId()] = $edge;
@@ -151,17 +148,14 @@ class Graph
      * @throws Exception
      */
     public function createDirectedEdge(
-        $id,
         Vertex $sourceVertex,
         Vertex $destinationVertex,
         array $attributes = array()
     ): DirectedEdge
     {
-        if ($this->hasEdge($id))
-            throw new Exception('Edge exist !');
         if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
             throw new Exception('Vertex must be in graph !');
-        $edge = new DirectedEdge($id, $sourceVertex, $destinationVertex, $this, $attributes);
+        $edge = new DirectedEdge($sourceVertex, $destinationVertex, $this, $attributes);
         $sourceVertex->addEdge($edge);
         $destinationVertex->addEdge($edge);
         $this->edges[$edge->getId()] = $edge;

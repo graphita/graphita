@@ -35,9 +35,9 @@ abstract class AbstractEdge
      * @param Graph $graph
      * @param array $attributes
      */
-    public function __construct($id, Vertex &$source, Vertex &$destination, Graph &$graph, array $attributes = array())
+    public function __construct(Vertex &$source, Vertex &$destination, Graph &$graph, array $attributes = array())
     {
-        $this->id = $id;
+        $this->id = uniqid($source->getId() . '-' . $destination->getId() . '-');
         $this->source = $source;
         $this->destination = $destination;
         $this->graph = $graph;

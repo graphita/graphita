@@ -103,7 +103,7 @@ class GraphTest extends TestCase
 
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $undirectedEdge = $graph->createUndirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
 
         $this->assertTrue($graph->removeVertex(1));
         $this->assertIsArray($graph->getVertices());
@@ -117,7 +117,7 @@ class GraphTest extends TestCase
         $graph = new Graph(['name' => 'Euler Graph']);
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $undirectedEdge = $graph->createUndirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
 
         $this->assertInstanceOf(AbstractEdge::class, $undirectedEdge);
         $this->assertIsArray($graph->getEdges());
@@ -127,26 +127,12 @@ class GraphTest extends TestCase
         $this->assertTrue($graph->hasEdge($undirectedEdge->getId()));
     }
 
-    public function testCreateDuplicateUndirectedEdge()
-    {
-        $graph = new Graph(['name' => 'Euler Graph']);
-        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
-        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $edgeId = uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-');
-        $undirectedEdge1 = $graph->createUndirectedEdge($edgeId, $vertex1, $vertex2, []);
-
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Edge exist !');
-
-        $undirectedEdge2 = $graph->createUndirectedEdge($edgeId, $vertex1, $vertex2, []);
-    }
-
     public function testCreateUndirectedEdgeFromTwoGraph()
     {
         $graph1 = new Graph(['name' => 'Euler Graph']);
         $vertex1 = $graph1->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph1->createVertex(2, ['name' => 'Vertex 2']);
-        $undirectedEdge1 = $graph1->createUndirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $undirectedEdge1 = $graph1->createUndirectedEdge($vertex1, $vertex2);
 
         $graph2 = new Graph(['name' => 'Another Euler Graph']);
         $vertex3 = $graph2->createVertex(3, ['name' => 'Vertex 3']);
@@ -155,7 +141,7 @@ class GraphTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Vertex must be in graph !');
 
-        $undirectedEdge2 = $graph1->createDirectedEdge(uniqid($vertex3->getId() . '-' . $vertex4->getId() . '-'), $vertex3, $vertex4, []);
+        $undirectedEdge2 = $graph1->createDirectedEdge($vertex3, $vertex4);
     }
 
     public function testCreateDirectedEdge()
@@ -163,7 +149,7 @@ class GraphTest extends TestCase
         $graph = new Graph(['name' => 'Euler Graph']);
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $directedEdge1 = $graph->createDirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $directedEdge1 = $graph->createDirectedEdge($vertex1, $vertex2);
 
         $this->assertInstanceOf(AbstractEdge::class, $directedEdge1);
         $this->assertIsArray($graph->getEdges());
@@ -173,26 +159,12 @@ class GraphTest extends TestCase
         $this->assertTrue($graph->hasEdge($directedEdge1->getId()));
     }
 
-    public function testCreateDuplicateDirectedEdge()
-    {
-        $graph = new Graph(['name' => 'Euler Graph']);
-        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
-        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $edgeId = uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-');
-        $directedEdge1 = $graph->createDirectedEdge($edgeId, $vertex1, $vertex2, []);
-
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Edge exist !');
-
-        $directedEdge2 = $graph->createDirectedEdge($edgeId, $vertex1, $vertex2, []);
-    }
-
     public function testCreateDirectedEdgeFromTwoGraph()
     {
         $graph1 = new Graph(['name' => 'Euler Graph']);
         $vertex1 = $graph1->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph1->createVertex(2, ['name' => 'Vertex 2']);
-        $directedEdge1 = $graph1->createDirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $directedEdge1 = $graph1->createDirectedEdge($vertex1, $vertex2);
 
         $graph2 = new Graph(['name' => 'Another Euler Graph']);
         $vertex3 = $graph2->createVertex(3, ['name' => 'Vertex 3']);
@@ -201,7 +173,7 @@ class GraphTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Vertex must be in graph !');
 
-        $directedEdge2 = $graph1->createDirectedEdge(uniqid($vertex3->getId() . '-' . $vertex4->getId() . '-'), $vertex3, $vertex4, []);
+        $directedEdge2 = $graph1->createDirectedEdge($vertex3, $vertex4);
     }
 
     public function testRemoveEdge()
@@ -209,7 +181,7 @@ class GraphTest extends TestCase
         $graph = new Graph(['name' => 'Euler Graph']);
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
-        $undirectedEdge = $graph->createUndirectedEdge(uniqid($vertex1->getId() . '-' . $vertex2->getId() . '-'), $vertex1, $vertex2, []);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2, []);
 
         $this->assertFalse($graph->removeEdge('2-1'));
         $this->assertTrue($graph->removeEdge($undirectedEdge->getId()));
