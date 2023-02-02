@@ -20,7 +20,27 @@ class Vertex
     /**
      * @var array
      */
+    private array $incomingEdges = array();
+
+    /**
+     * @var array
+     */
+    private array $outgoingEdges = array();
+
+    /**
+     * @var array
+     */
     private array $neighbors = array();
+
+    /**
+     * @var array
+     */
+    private array $incomingNeighbors = array();
+
+    /**
+     * @var array
+     */
+    private array $outgoingNeighbors = array();
 
     /**
      * @var Graph
@@ -66,6 +86,22 @@ class Vertex
     }
 
     /**
+     * @return array
+     */
+    public function getIncomingEdges(): array
+    {
+        return $this->incomingEdges;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOutgoingEdges(): array
+    {
+        return $this->outgoingEdges;
+    }
+
+    /**
      * @param AbstractEdge $edge
      * @return void
      * @throws \Exception
@@ -75,6 +111,14 @@ class Vertex
         if ($edge->getGraph() !== $this->getGraph())
             throw new \Exception('Edge & Vertex have to be within the same graph');
         $this->edges[$edge->getId()] = $edge;
+        if ($edge instanceof UndirectedEdge) {
+            $this->incomingEdges[$edge->getId()] = $edge;
+            $this->outgoingEdges[$edge->getId()] = $edge;
+        } else if ($edge instanceof DirectedEdge && $edge->getDestination()->getId() == $this->getId()) {
+            $this->incomingEdges[$edge->getId()] = $edge;
+        } else if ($edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()) {
+            $this->outgoingEdges[$edge->getId()] = $edge;
+        }
         $this->calculateNeighbors();
     }
 
@@ -122,6 +166,14 @@ class Vertex
                 return $vertex->getId() != $this->getId();
             }));
             $this->neighbors[$neighbor->getId()] = $neighbor;
+            if ($edge instanceof UndirectedEdge) {
+                $this->incomingNeighbors[$neighbor->getId()] = $neighbor;
+                $this->outgoingNeighbors[$neighbor->getId()] = $neighbor;
+            } else if ($edge instanceof DirectedEdge && $edge->getDestination()->getId() == $this->getId()) {
+                $this->incomingNeighbors[$neighbor->getId()] = $neighbor;
+            } else if ($edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()) {
+                $this->outgoingNeighbors[$neighbor->getId()] = $neighbor;
+            }
         }, $this->getEdges());
     }
 
@@ -131,6 +183,31 @@ class Vertex
     public function getNeighbors(): array
     {
         return $this->neighbors;
+    }
+
+    /**
+     * @return array
+     */
+    public function getIncomingNeighbors(): array
+    {
+        return $this->incomingNeighbors;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOutgoingNeighbors(): array
+    {
+        return $this->outgoingNeighbors;
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasNeighbor($id): bool
+    {
+        return array_key_exists($id, $this->neighbors);
     }
 
     /**
