@@ -22,31 +22,19 @@ abstract class AbstractEdge
      */
     private array $vertices = array();
 
-    /**
-     * @var Vertex
-     */
-    private Vertex $source;
-
-    /**
-     * @var Vertex
-     */
-    private Vertex $destination;
-
     use AttributesHandlerTrait;
 
     /**
-     * @param Vertex $source
-     * @param Vertex $destination
+     * @param Vertex $a
+     * @param Vertex $b
      * @param Graph $graph
      * @param array $attributes
      */
-    public function __construct(Vertex &$source, Vertex &$destination, Graph &$graph, array $attributes = array())
+    public function __construct(Vertex &$a, Vertex &$b, Graph &$graph, array $attributes = array())
     {
-        $this->id = uniqid($source->getId() . '-' . $destination->getId() . '-');
-        $this->source = $source;
-        $this->destination = $destination;
-        $this->vertices[$source->getId()] = $source;
-        $this->vertices[$destination->getId()] = $destination;
+        $this->id = uniqid($a->getId() . '-' . $b->getId() . '-');
+        $this->vertices[$a->getId()] = $a;
+        $this->vertices[$b->getId()] = $b;
         $this->graph = $graph;
         $this->setAttributes($attributes);
     }
