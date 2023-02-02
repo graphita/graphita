@@ -140,6 +140,22 @@ class Vertex
     }
 
     /**
+     * @return int
+     */
+    public function countIncomingEdges(): int
+    {
+        return count($this->incomingEdges);
+    }
+
+    /**
+     * @return int
+     */
+    public function countOutgoingEdges(): int
+    {
+        return count($this->outgoingEdges);
+    }
+
+    /**
      * @param $id
      * @return bool
      */
@@ -148,6 +164,8 @@ class Vertex
         if (!$this->hasEdge($id))
             return false;
         unset($this->edges[$id]);
+        unset($this->incomingEdges[$id]);
+        unset($this->outgoingEdges[$id]);
         if ($this->getGraph()->hasEdge($id)) {
             $this->getGraph()->removeEdge($id);
         }
@@ -216,5 +234,21 @@ class Vertex
     public function countNeighbors(): int
     {
         return count($this->neighbors);
+    }
+
+    /**
+     * @return int
+     */
+    public function countIncomingNeighbors(): int
+    {
+        return count($this->incomingNeighbors);
+    }
+
+    /**
+     * @return int
+     */
+    public function countOutgoingNeighbors(): int
+    {
+        return count($this->outgoingNeighbors);
     }
 }
