@@ -108,7 +108,7 @@ class VertexTest extends TestCase
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
         $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
-        $graph->removeEdge($undirectedEdge->getId());
+        $vertex1->removeEdge($undirectedEdge->getId());
 
         $this->assertIsArray($vertex1->getEdges());
         $this->assertEquals(0, $vertex1->countEdges());

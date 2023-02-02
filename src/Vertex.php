@@ -10,7 +10,8 @@ class Vertex
     /**
      * @var mixed
      */
-    private ?int $id;
+    private mixed $id;
+
     /**
      * @var array
      */
@@ -36,9 +37,9 @@ class Vertex
     }
 
     /**
-     * @return mixed|null
+     * @return int|null
      */
-    public function getId(): int
+    public function getId(): mixed
     {
         return $this->id;
     }
@@ -97,6 +98,9 @@ class Vertex
         if (!$this->hasEdge($id))
             return false;
         unset($this->edges[$id]);
+        if( $this->getGraph()->hasEdge($id) ){
+            $this->getGraph()->removeEdge($id);
+        }
         return true;
     }
 }
