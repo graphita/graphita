@@ -45,7 +45,8 @@ abstract class AbstractEdge
         $this->id = uniqid($source->getId() . '-' . $destination->getId() . '-');
         $this->source = $source;
         $this->destination = $destination;
-        array_push($this->vertices, $this->source, $this->destination);
+        $this->vertices[$source->getId()] = $source;
+        $this->vertices[$destination->getId()] = $destination;
         $this->graph = $graph;
         $this->setAttributes($attributes);
     }

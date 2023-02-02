@@ -118,4 +118,31 @@ class VertexTest extends TestCase
         $this->assertEquals(0, $vertex2->countEdges());
         $this->assertFalse($vertex2->hasEdge($undirectedEdge->getId()));
     }
+
+    public function testGetNeighbors()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+
+        $this->assertIsArray($vertex1->getNeighbors());
+        $this->assertEmpty($vertex1->getNeighbors());
+        $this->assertEquals(0, $vertex1->countNeighbors());
+
+        $this->assertIsArray($vertex2->getNeighbors());
+        $this->assertEmpty($vertex2->getNeighbors());
+        $this->assertEquals(0, $vertex2->countNeighbors());
+
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
+
+        $this->assertIsArray($vertex1->getNeighbors());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getNeighbors());
+        $this->assertEquals(1, $vertex1->countNeighbors());
+        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getNeighbors());
+
+        $this->assertIsArray($vertex2->getNeighbors());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getNeighbors());
+        $this->assertEquals(1, $vertex2->countNeighbors());
+        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getNeighbors());
+    }
 }

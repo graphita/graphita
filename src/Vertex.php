@@ -18,6 +18,11 @@ class Vertex
     private array $edges = array();
 
     /**
+     * @var array
+     */
+    private array $neighbors = array();
+
+    /**
      * @var Graph
      */
     private Graph $graph;
@@ -70,6 +75,7 @@ class Vertex
         if ($edge->getGraph() !== $this->getGraph())
             throw new \Exception('Edge & Vertex have to be within the same graph');
         $this->edges[$edge->getId()] = $edge;
+        $this->calculateNeighbors();
     }
 
     /**
@@ -98,9 +104,40 @@ class Vertex
         if (!$this->hasEdge($id))
             return false;
         unset($this->edges[$id]);
-        if( $this->getGraph()->hasEdge($id) ){
+        if ($this->getGraph()->hasEdge($id)) {
             $this->getGraph()->removeEdge($id);
         }
+        $this->calculateNeighbors();
         return true;
+    }
+
+    /**
+     * @return void
+     */
+    private function calculateNeighbors(): void
+    {
+        $this->neighbors = [];
+        array_map(function ($edge) {
+            $neighbor = current(array_filter($edge->getVertices(), function (Vertex $vertex) {
+                return $vertex->getId() != $this->getId();
+            }));
+            $this->neighbors[$neighbor->getId()] = $neighbor;
+        }, $this->getEdges());
+    }
+
+    /**
+     * @return array
+     */
+    public function getNeighbors(): array
+    {
+        return $this->neighbors;
+    }
+
+    /**
+     * @return int
+     */
+    public function countNeighbors(): int
+    {
+        return count($this->neighbors);
     }
 }
