@@ -12,6 +12,7 @@ abstract class AbstractEdge
      * @var string
      */
     private string $id;
+
     /**
      * @var Graph
      */

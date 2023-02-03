@@ -108,4 +108,26 @@ class DirectedEdgeTest extends TestCase
         $this->assertArrayHasKey($vertex1->getId(), $directedEdge->getVertices());
         $this->assertArrayHasKey($vertex2->getId(), $directedEdge->getVertices());
     }
+
+    public function testGetSource()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $directedEdge = $graph->createDirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+
+        $this->assertInstanceOf(Vertex::class, $directedEdge->getSource());
+        $this->assertEquals($vertex1, $directedEdge->getSource());
+    }
+
+    public function testGetDestination()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $directedEdge = $graph->createDirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+
+        $this->assertInstanceOf(Vertex::class, $directedEdge->getDestination());
+        $this->assertEquals($vertex2, $directedEdge->getDestination());
+    }
 }
