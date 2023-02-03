@@ -132,6 +132,24 @@ class Vertex
     }
 
     /**
+     * @param $id
+     * @return bool
+     */
+    public function hasIncomingEdge($id): bool
+    {
+        return array_key_exists($id, $this->incomingEdges);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasOutgoingEdges($id): bool
+    {
+        return array_key_exists($id, $this->outgoingEdges);
+    }
+
+    /**
      * @return int
      */
     public function countEdges(): int
@@ -226,6 +244,24 @@ class Vertex
     public function hasNeighbor($id): bool
     {
         return array_key_exists($id, $this->neighbors);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasIncomingNeighbors($id): bool
+    {
+        return array_key_exists($id, $this->incomingNeighbors);
+    }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasOutgoingNeighbors($id): bool
+    {
+        return array_key_exists($id, $this->outgoingNeighbors);
     }
 
     /**
