@@ -63,4 +63,13 @@ abstract class AbstractEdge
     {
         return $this->vertices;
     }
+
+    /**
+     * @param $id
+     * @return bool
+     */
+    public function hasVertex($id): bool
+    {
+        return array_key_exists($id, $this->vertices);
+    }
 }

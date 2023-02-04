@@ -178,6 +178,76 @@ class VertexTest extends TestCase
         $this->assertFalse($vertex2->hasOutgoingEdges($directedEdge->getId()));
     }
 
+    public function testGetIncomingEdgesFromWhenVertexHasNoEdge()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Vertex ' . $vertex1->getId() . ' has no Edge from Vertex ' . $vertex2->getId());
+        $unknownEdges = $vertex1->getIncomingEdgesFrom($vertex2);
+    }
+
+    public function testGetIncomingEdgesFromWhenVertexHasEdges()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $vertex3 = $graph->createVertex(3, ['name' => 'Vertex 3']);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
+
+        $incomingEdges = $vertex1->getIncomingEdgesFrom($vertex2);
+
+        $this->assertIsArray($incomingEdges);
+        $this->assertCount(1, $incomingEdges);
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $incomingEdges);
+        $this->assertArrayHasKey($undirectedEdge->getId(), $incomingEdges);
+
+        $directedEdge = $graph->createUndirectedEdge($vertex3, $vertex1);
+        $incomingEdges = $vertex1->getIncomingEdgesFrom($vertex3);
+
+        $this->assertIsArray($incomingEdges);
+        $this->assertCount(1, $incomingEdges);
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $incomingEdges);
+        $this->assertArrayHasKey($directedEdge->getId(), $incomingEdges);
+    }
+
+    public function testGetOutgoingEdgesFromWhenVertexHasNoEdge()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Vertex ' . $vertex1->getId() . ' has no Edge to Vertex ' . $vertex2->getId());
+        $unknownEdges = $vertex1->getOutgoingEdgesTo($vertex2);
+    }
+
+    public function testGetOutgoingEdgesFromWhenVertexHasEdges()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $vertex3 = $graph->createVertex(3, ['name' => 'Vertex 3']);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2);
+
+        $outgoingEdges = $vertex1->getOutgoingEdgesTo($vertex2);
+
+        $this->assertIsArray($outgoingEdges);
+        $this->assertCount(1, $outgoingEdges);
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $outgoingEdges);
+        $this->assertArrayHasKey($undirectedEdge->getId(), $outgoingEdges);
+
+        $directedEdge = $graph->createUndirectedEdge($vertex1, $vertex3);
+        $outgoingEdges = $vertex1->getIncomingEdgesFrom($vertex3);
+
+        $this->assertIsArray($outgoingEdges);
+        $this->assertCount(1, $outgoingEdges);
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $outgoingEdges);
+        $this->assertArrayHasKey($directedEdge->getId(), $outgoingEdges);
+    }
+
     public function testRemoveEdges()
     {
         $graph = new Graph();

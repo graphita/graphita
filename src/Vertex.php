@@ -94,6 +94,44 @@ class Vertex
     }
 
     /**
+     * @param Vertex $sourceVertex
+     * @return array
+     * @throws \Exception
+     */
+    public function getIncomingEdgesFrom(Vertex $sourceVertex): array
+    {
+        if (!$this->hasIncomingNeighbors($sourceVertex->getId()))
+            throw new \Exception('Vertex ' . $this->getId() . ' has no Edge from Vertex ' . $sourceVertex->getId());
+        return array_filter($this->getIncomingEdges(), function ($edge) use ($sourceVertex) {
+            if ($edge instanceof UndirectedEdge) {
+                return $edge->hasVertex($sourceVertex->getId());
+            } else if ($edge instanceof DirectedEdge) {
+                return $edge->getSource() === $sourceVertex;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * @param Vertex $destinationVertex
+     * @return array
+     * @throws \Exception
+     */
+    public function getOutgoingEdgesTo(Vertex $destinationVertex): array
+    {
+        if (!$this->hasOutgoingNeighbors($destinationVertex->getId()))
+            throw new \Exception('Vertex ' . $this->getId() . ' has no Edge to Vertex ' . $destinationVertex->getId());
+        return array_filter($this->getOutgoingEdges(), function ($edge) use ($destinationVertex) {
+            if ($edge instanceof UndirectedEdge) {
+                return $edge->hasVertex($destinationVertex->getId());
+            } else if ($edge instanceof DirectedEdge) {
+                return $edge->getDestination() === $destinationVertex;
+            }
+            return false;
+        });
+    }
+
+    /**
      * @return array
      */
     public function getOutgoingEdges(): array
@@ -109,15 +147,17 @@ class Vertex
     public function addEdge(AbstractEdge &$edge): void
     {
         if ($edge->getGraph() !== $this->getGraph())
-            throw new \Exception('Edge & Vertex have to be within the same graph');
+            throw new \Exception('Edge & Vertex have to be within the same graph !');
         $this->edges[$edge->getId()] = $edge;
-        if ($edge instanceof UndirectedEdge) {
+        if ($edge instanceof UndirectedEdge && $edge->hasVertex($this->getId())) {
             $this->incomingEdges[$edge->getId()] = $edge;
             $this->outgoingEdges[$edge->getId()] = $edge;
         } else if ($edge instanceof DirectedEdge && $edge->getDestination()->getId() == $this->getId()) {
             $this->incomingEdges[$edge->getId()] = $edge;
         } else if ($edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()) {
             $this->outgoingEdges[$edge->getId()] = $edge;
+        } else {
+            throw new \Exception('Can\'t add Edge to Vertex !');
         }
         $this->calculateNeighbors();
     }
