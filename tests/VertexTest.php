@@ -204,7 +204,7 @@ class VertexTest extends TestCase
         $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $incomingEdges);
         $this->assertArrayHasKey($undirectedEdge->getId(), $incomingEdges);
 
-        $directedEdge = $graph->createUndirectedEdge($vertex3, $vertex1);
+        $directedEdge = $graph->createDirectedEdge($vertex3, $vertex1);
         $incomingEdges = $vertex1->getIncomingEdgesFrom($vertex3);
 
         $this->assertIsArray($incomingEdges);
@@ -239,8 +239,8 @@ class VertexTest extends TestCase
         $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $outgoingEdges);
         $this->assertArrayHasKey($undirectedEdge->getId(), $outgoingEdges);
 
-        $directedEdge = $graph->createUndirectedEdge($vertex1, $vertex3);
-        $outgoingEdges = $vertex1->getIncomingEdgesFrom($vertex3);
+        $directedEdge = $graph->createDirectedEdge($vertex1, $vertex3);
+        $outgoingEdges = $vertex1->getOutgoingEdgesTo($vertex3);
 
         $this->assertIsArray($outgoingEdges);
         $this->assertCount(1, $outgoingEdges);
