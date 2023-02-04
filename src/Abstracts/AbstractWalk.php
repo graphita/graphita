@@ -2,7 +2,9 @@
 
 namespace Graphita\Graphita\Abstracts;
 
+use Graphita\Graphita\DirectedEdge;
 use Graphita\Graphita\Graph;
+use Graphita\Graphita\UndirectedEdge;
 use Graphita\Graphita\Vertex;
 use Exception;
 
@@ -12,6 +14,11 @@ abstract class AbstractWalk
      * @var Graph
      */
     private Graph $graph;
+
+    /**
+     * @var array
+     */
+    private array $steps = array();
 
     /**
      * @var array
@@ -40,13 +47,13 @@ abstract class AbstractWalk
 
     /**
      * @param Graph $graph
-     * @param array $vertices
+     * @param array $steps
      * @throws Exception
      */
-    public function __construct(Graph &$graph, array $vertices)
+    public function __construct(Graph &$graph, array $steps)
     {
         $this->graph = $graph;
-        $this->addSteps($vertices);
+        $this->addSteps($steps);
     }
 
     /**
@@ -55,6 +62,22 @@ abstract class AbstractWalk
     public function getGraph(): Graph
     {
         return $this->graph;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSteps(): array
+    {
+        return $this->steps;
+    }
+
+    /**
+     * @return int
+     */
+    public function countSteps(): int
+    {
+        return count($this->steps);
     }
 
     /**
@@ -114,45 +137,56 @@ abstract class AbstractWalk
     }
 
     /**
-     * @param Vertex $vertex
+     * @param Vertex|AbstractEdge $step
      * @return void
      * @throws Exception
      */
-    public function addStep(Vertex $vertex): void
+    public function addStep(Vertex|AbstractEdge $step): void
     {
-        $this->addSteps([$vertex]);
+        $this->addSteps([$step]);
     }
 
     /**
-     * @param array $vertices
+     * @param array $steps
      * @return void
      * @throws Exception
      */
-    public function addSteps(array $vertices): void
+    public function addSteps(array $steps): void
     {
-        $this->checkSteps($vertices);
-        foreach ($vertices as $vertex) {
-            $this->vertices[] = $vertex;
-            $nextVertex = next($vertices);
-            if ($nextVertex) {
-                $nextEdge = $vertex->getOutgoingEdges()[$nextVertex->getId()];
-                $this->edges[] = $nextEdge;
+        $this->checkSteps($steps);
+        foreach ($steps as $step) {
+            $this->steps[] = $step;
+            if ($step instanceof Vertex) {
+                $this->vertices[] = $step;
+            } else if ($step instanceof AbstractEdge) {
+                $this->edges[] = $step;
             }
         }
     }
 
     /**
-     * @param array $vertices
+     * @param array $steps
+     * @return void
      * @throws Exception
      */
-    public function checkSteps(array $vertices): void
+    public function checkSteps(array $steps): void
     {
-        $vertices = array_merge($this->vertices, $vertices);
+        $steps = array_merge($this->steps, $steps);
+        $vertices = array_filter($steps, function ($step, $stepIndex) {
+            return $stepIndex % 2 == 0;
+        }, ARRAY_FILTER_USE_BOTH);
+        $edges = array_filter($steps, function ($step, $stepIndex) {
+            return $stepIndex % 2 == 1;
+        }, ARRAY_FILTER_USE_BOTH);
+
         $verticesIds = [];
-        $edgesIds = [];
         foreach ($vertices as $vertex) {
-            if ($vertex->getGraph() !== $this->getGraph())
+            if (!$vertex instanceof Vertex) {
+                throw new Exception('Invalid steps !');
+            }
+            if ($vertex->getGraph() !== $this->getGraph()) {
                 throw new Exception('Vertices must be in a same Graph !');
+            }
             if (
                 !$this->canRepeatVertices() &&
                 array_key_exists($vertex->getId(), $verticesIds)
@@ -160,20 +194,53 @@ abstract class AbstractWalk
                 throw new Exception('Vertices must be unique !');
             }
             $verticesIds[] = $vertex->getId();
-            $nextVertex = next($vertices);
-            if ($nextVertex) {
-                if ($vertex->hasOutgoingNeighbors($nextVertex->getId()))
-                    throw new Exception('Vertices must be neighbors !');
-                $nextEdge = $vertex->getOutgoingEdges()[$nextVertex->getId()];
-                if (
-                    !$this->canRepeatEdges() &&
-                    array_key_exists($nextEdge->getId(), $edgesIds)
-                ) {
-                    throw new Exception('Edges must be unique !');
+        }
+
+        $edgesIds = [];
+        foreach ($edges as $edge) {
+            if (!$edge instanceof AbstractEdge) {
+                throw new Exception('Invalid steps !');
+            }
+            if ($edge->getGraph() !== $this->getGraph()) {
+                throw new Exception('Edges must be in a same Graph !');
+            }
+            if (
+                !$this->canRepeatEdges() &&
+                array_key_exists($edge->getId(), $edgesIds)
+            ) {
+                throw new Exception('Edges must be unique !');
+            }
+            $edgesIds[] = $edge->getId();
+        }
+
+        if (count($vertices) != count($edges) + 1) {
+            throw new Exception('Invalid steps !');
+        }
+
+        foreach ($steps as $step) {
+            if ($step instanceof Vertex) {
+                $nextEdge = next($steps);
+                if ($nextEdge) {
+                    if (
+                        !$step->hasOutgoingEdges($nextEdge->getId()) ||
+                        ($nextEdge instanceof UndirectedEdge && !$nextEdge->hasVertex($step->getId())) ||
+                        ($nextEdge instanceof DirectedEdge && $nextEdge->getSource() !== $step)
+                    ) {
+                        throw new Exception('Invalid steps !');
+                    }
                 }
-                $edgesIds[] = $nextEdge->getId();
+            } else if ($step instanceof AbstractEdge) {
+                $nextVertex = next($steps);
+                if(
+                    !$nextVertex->hasIncomingEdge($step->getId()) ||
+                    ($step instanceof UndirectedEdge && !$step->hasVertex($nextVertex->getId())) ||
+                    ($step instanceof DirectedEdge && $step->getDestination() !== $nextVertex)
+                ){
+                    throw new Exception('Invalid steps !');
+                }
             }
         }
+
         if (
             $this->isLoop() &&
             $vertices[array_key_first($vertices)] !== $vertices[array_key_last($vertices)]
