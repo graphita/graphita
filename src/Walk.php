@@ -1,14 +1,15 @@
 <?php
 
-namespace Graphita\Graphita\Abstracts;
+namespace Graphita\Graphita;
 
+use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\DirectedEdge;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\UndirectedEdge;
 use Graphita\Graphita\Vertex;
 use Exception;
 
-abstract class AbstractWalk
+class Walk
 {
     /**
      * @var Graph

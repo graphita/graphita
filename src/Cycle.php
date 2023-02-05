@@ -2,7 +2,7 @@
 
 namespace Graphita\Graphita;
 
-class Cycle extends Abstracts\AbstractWalk
+class Cycle extends Walk
 {
     /**
      * @var bool

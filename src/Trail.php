@@ -2,7 +2,7 @@
 
 namespace Graphita\Graphita;
 
-class Trail extends Abstracts\AbstractWalk
+class Trail extends Walk
 {
     /**
      * @var bool

@@ -2,7 +2,7 @@
 
 namespace Graphita\Graphita;
 
-class Circuit extends Abstracts\AbstractWalk
+class Circuit extends Walk
 {
     /**
      * @var bool
