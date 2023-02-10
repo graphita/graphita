@@ -19,6 +19,11 @@ abstract class AbstractEdge
     private Graph $graph;
 
     /**
+     * @var float|int
+     */
+    private float|int $weight = 1;
+
+    /**
      * @var array
      */
     private array $vertices = array();
@@ -81,5 +86,23 @@ abstract class AbstractEdge
     public function hasVertex($id): bool
     {
         return array_key_exists($id, $this->vertices);
+    }
+
+    /**
+     * @return float
+     */
+    public function getWeight(): float
+    {
+        return $this->weight;
+    }
+
+    /**
+     * @param float|int $weight
+     * @return AbstractEdge
+     */
+    public function setWeight(float|int $weight): static
+    {
+        $this->weight = $weight;
+        return $this;
     }
 }

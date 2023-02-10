@@ -109,6 +109,22 @@ class DirectedEdgeTest extends TestCase
         $this->assertArrayHasKey($vertex2->getId(), $directedEdge->getVertices());
     }
 
+    public function testGetAndSetDirectedEdgeWeight()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $directedEdge = $graph->createDirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+
+        $this->assertIsNumeric($directedEdge->getWeight());
+        $this->assertEquals(1, $directedEdge->getWeight());
+
+        $directedEdge->setWeight(2.5);
+
+        $this->assertIsNumeric($directedEdge->getWeight());
+        $this->assertEquals(2.5, $directedEdge->getWeight());
+    }
+
     public function testGetSource()
     {
         $graph = new Graph();

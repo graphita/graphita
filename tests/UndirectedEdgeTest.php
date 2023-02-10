@@ -108,4 +108,20 @@ class UndirectedEdgeTest extends TestCase
         $this->assertArrayHasKey($vertex1->getId(), $undirectedEdge->getVertices());
         $this->assertArrayHasKey($vertex2->getId(), $undirectedEdge->getVertices());
     }
+
+    public function testGetAndSetUndirectedEdgeWeight()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+
+        $this->assertIsNumeric($undirectedEdge->getWeight());
+        $this->assertEquals(1, $undirectedEdge->getWeight());
+
+        $undirectedEdge->setWeight(2.5);
+
+        $this->assertIsNumeric($undirectedEdge->getWeight());
+        $this->assertEquals(2.5, $undirectedEdge->getWeight());
+    }
 }
