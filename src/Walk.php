@@ -200,13 +200,13 @@ class Walk
                 throw new InvalidArgumentException('Edges must be array of AbstractEdge !');
             }
             if ($edge->getGraph() !== $this->getGraph()) {
-                throw new Exception('Edges must be in a same Graph !');
+                throw new InvalidArgumentException('Edges must be in a same Graph !');
             }
             if (
                 !$this->canRepeatEdges() &&
                 in_array($edge->getId(), $edgesIds)
             ) {
-                throw new Exception('Edges must be unique !');
+                throw new InvalidArgumentException('Edges must be unique !');
             }
             $edgesIds[] = $edge->getId();
 
@@ -214,7 +214,9 @@ class Walk
             if ($prevEdge) {
                 $outgoingVertices = array_diff($edge->getVertices(), $prevEdge->getVertices());
                 if (count($outgoingVertices) > 1) {
-                    throw new Exception('Invalid steps ! There is no common Vertex between ' . $prevEdge->getId() . ' and ' . $edge->getId());
+                    throw new InvalidArgumentException('Invalid steps ! There is no common Vertex between Edge ' . $prevEdge->getId() . ' and ' . $edge->getId() . ' !');
+                } else if (count($outgoingVertices) == 0) {
+                    $outgoingVertices = [$this->vertices[count($this->vertices) - 2]];
                 }
                 $this->edges[] = $edge;
                 $this->vertices[] = $outgoingVertices[array_key_last($outgoingVertices)];

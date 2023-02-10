@@ -177,6 +177,41 @@ class WalkTest extends TestCase
         $this->assertEquals($this->edges['3-4'], $walk->getEdges()[2]);
     }
 
+    public function testAddEdgesWithArrayOfNonEdge()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Edges must be array of AbstractEdge !');
+
+        $walk = new Walk($this->graph);
+        $walk->addEdges([1, 2, 3]);
+    }
+
+    public function testAddEdgesWithOutsideOfGraphEdge()
+    {
+        $anotherGraph = new Graph();
+        $anotherVertex1 = $anotherGraph->createVertex(1);
+        $anotherVertex2 = $anotherGraph->createVertex(2);
+        $anotherEdge = $anotherGraph->createUndirectedEdge($anotherVertex1, $anotherVertex2);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Edges must be in a same Graph !');
+
+        $walk = new Walk($this->graph);
+        $walk->addEdges([$anotherEdge]);
+    }
+
+    public function testAddEdgesWithInvalidSteps()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid steps ! There is no common Vertex between Edge ' . $this->edges['1-2']->getId() . ' and ' . $this->edges['3-4']->getId() . ' !');
+
+        $walk = new Walk($this->graph);
+        $walk->addEdges([
+            $this->edges['1-2'],
+            $this->edges['3-4'],
+        ]);
+    }
+
     public function testAddEdges()
     {
         $walk = new Walk($this->graph);
