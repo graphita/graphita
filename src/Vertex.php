@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita;
 
+use Exception;
 use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
 
@@ -96,12 +97,12 @@ class Vertex
     /**
      * @param Vertex $sourceVertex
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getIncomingEdgesFrom(Vertex $sourceVertex): array
     {
         if (!$this->hasIncomingNeighbors($sourceVertex->getId()))
-            throw new \Exception('Vertex ' . $this->getId() . ' has no Edge from Vertex ' . $sourceVertex->getId());
+            throw new Exception('Vertex ' . $this->getId() . ' has no Edge from Vertex ' . $sourceVertex->getId());
         return array_filter($this->getIncomingEdges(), function ($edge) use ($sourceVertex) {
             if ($edge instanceof UndirectedEdge) {
                 return $edge->hasVertex($sourceVertex->getId());
@@ -115,12 +116,12 @@ class Vertex
     /**
      * @param Vertex $destinationVertex
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function getOutgoingEdgesTo(Vertex $destinationVertex): array
     {
         if (!$this->hasOutgoingNeighbors($destinationVertex->getId()))
-            throw new \Exception('Vertex ' . $this->getId() . ' has no Edge to Vertex ' . $destinationVertex->getId());
+            throw new Exception('Vertex ' . $this->getId() . ' has no Edge to Vertex ' . $destinationVertex->getId());
         return array_filter($this->getOutgoingEdges(), function ($edge) use ($destinationVertex) {
             if ($edge instanceof UndirectedEdge) {
                 return $edge->hasVertex($destinationVertex->getId());
@@ -142,12 +143,12 @@ class Vertex
     /**
      * @param AbstractEdge $edge
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function addEdge(AbstractEdge &$edge): void
     {
         if ($edge->getGraph() !== $this->getGraph())
-            throw new \Exception('Edge & Vertex have to be within the same graph !');
+            throw new Exception('Edge & Vertex have to be within the same graph !');
         $this->edges[$edge->getId()] = $edge;
         if ($edge instanceof UndirectedEdge && $edge->hasVertex($this->getId())) {
             $this->incomingEdges[$edge->getId()] = $edge;
@@ -157,7 +158,7 @@ class Vertex
         } else if ($edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()) {
             $this->outgoingEdges[$edge->getId()] = $edge;
         } else {
-            throw new \Exception('Can\'t add Edge to Vertex !');
+            throw new Exception('Can\'t add Edge to Vertex !');
         }
         $this->calculateNeighbors();
     }
