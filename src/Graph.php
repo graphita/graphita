@@ -30,6 +30,16 @@ class Graph
     }
 
     /**
+     * @return string
+     */
+    function __toString()
+    {
+        return 'Graph Information:' . json_encode($this->getAttributes()) . PHP_EOL .
+            'Vertices:' . json_encode($this->getVertices()) . PHP_EOL .
+            'Edges:' . json_encode($this->getEdges());
+    }
+
+    /**
      * @return array
      */
     public function getVertices(): array
@@ -128,7 +138,7 @@ class Graph
     public function createUndirectedEdge(
         Vertex $sourceVertex,
         Vertex $destinationVertex,
-        array $attributes = array()
+        array  $attributes = array()
     ): UndirectedEdge
     {
         if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
@@ -150,7 +160,7 @@ class Graph
     public function createDirectedEdge(
         Vertex $sourceVertex,
         Vertex $destinationVertex,
-        array $attributes = array()
+        array  $attributes = array()
     ): DirectedEdge
     {
         if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
@@ -172,7 +182,7 @@ class Graph
             return false;
         $vertices = $this->edges[$id]->getVertices();
         array_map(function (Vertex $vertex) use ($id) {
-            if( $vertex->hasEdge($id) ){
+            if ($vertex->hasEdge($id)) {
                 $vertex->removeEdge($id);
             }
         }, $vertices);

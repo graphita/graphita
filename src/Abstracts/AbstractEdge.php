@@ -43,6 +43,16 @@ abstract class AbstractEdge
     /**
      * @return string
      */
+    function __toString()
+    {
+        return 'Edge Id:' . $this->getId() . PHP_EOL .
+            'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
+            'Vertices:' . json_encode($this->getVertices());
+    }
+
+    /**
+     * @return string
+     */
     public function getId(): string
     {
         return $this->id;

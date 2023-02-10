@@ -63,6 +63,16 @@ class Vertex
     }
 
     /**
+     * @return string
+     */
+    function __toString()
+    {
+        return 'Vertex Id:' . $this->getId() . PHP_EOL .
+            'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
+            'Edges:' . json_encode($this->getEdges());
+    }
+
+    /**
      * @return int|null
      */
     public function getId(): mixed
