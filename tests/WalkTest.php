@@ -47,6 +47,8 @@ class WalkTest extends TestCase
         $this->assertCount(0, $walk->getEdges());
         $this->assertEquals(0, $walk->countEdges());
 
+        $this->assertEquals(0, $walk->getTotalWeight());
+
         $this->assertTrue($walk->canRepeatVertices());
         $this->assertTrue($walk->canRepeatEdges());
         $this->assertFalse($walk->isLoop());
@@ -283,5 +285,25 @@ class WalkTest extends TestCase
         $this->assertEquals($this->vertices[2], $walk->getVertices()[1]);
         $this->assertEquals($this->vertices[3], $walk->getVertices()[2]);
         $this->assertEquals($this->vertices[4], $walk->getVertices()[3]);
+    }
+
+    public function testGetTotalWeight()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addVertex($this->vertices[1]);
+
+        $this->assertEquals(0, $walk->getTotalWeight());
+
+        $walk->addVertex($this->vertices[2]);
+
+        $this->assertEquals(1, $walk->getTotalWeight());
+
+        $walk->addVertex($this->vertices[3]);
+
+        $this->assertEquals(2, $walk->getTotalWeight());
+
+        $walk->addVertex($this->vertices[4]);
+
+        $this->assertEquals(3, $walk->getTotalWeight());
     }
 }

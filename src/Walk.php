@@ -43,6 +43,11 @@ class Walk
     private bool $isLoop = false;
 
     /**
+     * @var float|int
+     */
+    private float|int $totalWeight = 0;
+
+    /**
      * @param Graph $graph
      * @throws Exception
      */
@@ -91,6 +96,25 @@ class Walk
     public function isLoop(): bool
     {
         return $this->isLoop;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalWeight(): float|int
+    {
+        return $this->totalWeight;
+    }
+
+    /**
+     * @return void
+     */
+    private function calculateTotalWeight(): void
+    {
+        $this->totalWeight = array_reduce($this->getEdges(), function( $totalWeight, AbstractEdge $edge ){
+            $totalWeight += $edge->getWeight();
+            return $totalWeight;
+        }, 0);
     }
 
     /**
@@ -156,6 +180,7 @@ class Walk
         ) {
             throw new Exception('First Vertex & Last Vertex must be same in Loop !');
         }
+        $this->calculateTotalWeight();
     }
 
     /**
@@ -233,6 +258,7 @@ class Walk
         ) {
             throw new Exception('First Vertex & Last Vertex must be same in Loop !');
         }
+        $this->calculateTotalWeight();
     }
 
     /**
