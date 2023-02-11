@@ -52,7 +52,9 @@ abstract class AbstractEdge
     {
         return 'Edge Id:' . $this->getId() . PHP_EOL .
             'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
-            'Vertices:' . json_encode($this->getVertices());
+            'Vertices:' . implode(',', array_map(function ($vertex) {
+                return $vertex->getId() . ':' . json_encode($vertex->getAttributes());
+            }, $this->getVertices())) . PHP_EOL;
     }
 
     /**

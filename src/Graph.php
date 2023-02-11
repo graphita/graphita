@@ -35,8 +35,12 @@ class Graph
     function __toString()
     {
         return 'Graph Information:' . json_encode($this->getAttributes()) . PHP_EOL .
-            'Vertices:' . json_encode($this->getVertices()) . PHP_EOL .
-            'Edges:' . json_encode($this->getEdges());
+            'Vertices:' . implode(',', array_map(function ($vertex) {
+                return $vertex->getId() . ':' . json_encode($vertex->getAttributes());
+            }, $this->getVertices())) . PHP_EOL .
+            'Edges:' . implode(',', array_map(function ($edge) {
+                return $edge->getId() . ':' . json_encode($edge->getAttributes());
+            }, $this->getEdges()));
     }
 
     /**

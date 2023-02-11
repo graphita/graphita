@@ -69,7 +69,9 @@ class Vertex
     {
         return 'Vertex Id:' . $this->getId() . PHP_EOL .
             'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
-            'Edges:' . json_encode($this->getEdges());
+            'Edges:' . implode(',', array_map(function ($edge) {
+                return $edge->getId() . ':' . json_encode($edge->getAttributes());
+            }, $this->getEdges()));
     }
 
     /**
