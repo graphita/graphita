@@ -246,15 +246,20 @@ class Walk
                 if (count($outgoingVertices) > 1) {
                     throw new InvalidArgumentException('Invalid steps ! There is no common Vertex between Edge ' . $prevEdge->getId() . ' and ' . $edge->getId() . ' !');
                 } else if (count($outgoingVertices) == 0) {
-                    $outgoingVertices = [$this->vertices[count($this->vertices) - 2]];
+                    $outgoingVertices = array_diff($edge->getVertices(), [$this->vertices[array_key_last($this->vertices)]]);
                 }
                 $this->edges[] = $edge;
                 $this->vertices[] = $outgoingVertices[array_key_last($outgoingVertices)];
             } else {
                 $vertices = $edge->getVertices();
-                $this->vertices[] = $vertices[array_key_first($vertices)];
+                $nextEdge = $edges[$edgeKey + 1] ?? false;
                 $this->edges[] = $edge;
-                $this->vertices[] = $vertices[array_key_last($vertices)];
+                if ($nextEdge) {
+                    $this->vertices = array_merge(array_diff($vertices, $nextEdge->getVertices()), array_intersect($vertices, $nextEdge->getVertices()));
+                } else {
+                    $this->vertices[] = $vertices[array_key_first($vertices)];
+                    $this->vertices[] = $vertices[array_key_last($vertices)];
+                }
             }
         }
         if (
