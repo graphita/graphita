@@ -4,18 +4,9 @@ namespace Graphita\Graphita;
 
 class Cycle extends Walk
 {
-    /**
-     * @var bool
-     */
-    private bool $repeatVertices = false;
+    const REPEAT_VERTICES = false;
 
-    /**
-     * @var bool
-     */
-    private bool $repeatEdges = false;
+    const REPEAT_EDGES = false;
 
-    /**
-     * @var bool
-     */
-    private bool $isLoop = true;
+    const IS_LOOP = true;
 }

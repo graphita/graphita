@@ -4,13 +4,7 @@ namespace Graphita\Graphita;
 
 class Path extends Walk
 {
-    /**
-     * @var bool
-     */
-    private bool $repeatVertices = false;
+    const REPEAT_VERTICES = false;
 
-    /**
-     * @var bool
-     */
-    private bool $repeatEdges = false;
+    const REPEAT_EDGES = false;
 }

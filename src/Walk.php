@@ -28,24 +28,15 @@ class Walk
     private array $edges = array();
 
     /**
-     * @var bool
-     */
-    private bool $repeatVertices = true;
-
-    /**
-     * @var bool
-     */
-    private bool $repeatEdges = true;
-
-    /**
-     * @var bool
-     */
-    private bool $isLoop = false;
-
-    /**
      * @var float|int
      */
     private float|int $totalWeight = 0;
+
+    const REPEAT_VERTICES = true;
+
+    const REPEAT_EDGES = true;
+
+    const IS_LOOP = false;
 
     /**
      * @param Graph $graph
@@ -84,7 +75,7 @@ class Walk
      */
     public function canRepeatVertices(): bool
     {
-        return $this->repeatVertices;
+        return static::REPEAT_VERTICES;
     }
 
     /**
@@ -92,7 +83,7 @@ class Walk
      */
     public function canRepeatEdges(): bool
     {
-        return $this->repeatEdges;
+        return static::REPEAT_EDGES;
     }
 
     /**
@@ -100,7 +91,7 @@ class Walk
      */
     public function isLoop(): bool
     {
-        return $this->isLoop;
+        return static::IS_LOOP;
     }
 
     /**
@@ -148,21 +139,11 @@ class Walk
         $vertices = array_merge($this->getVertices(), $vertices);
         $this->vertices = [];
         $this->edges = [];
-        $verticesIds = [];
         foreach ($vertices as $vertexKey => $vertex) {
             if (!$vertex instanceof Vertex) {
                 throw new InvalidArgumentException('Vertices must be array of Vertex !');
             }
-            if ($vertex->getGraph() !== $this->getGraph()) {
-                throw new InvalidArgumentException('Vertices must be in a same Graph !');
-            }
-            if (
-                !$this->canRepeatVertices() &&
-                in_array($vertex->getId(), $verticesIds)
-            ) {
-                throw new InvalidArgumentException('Vertices must be unique !');
-            }
-            $verticesIds[] = $vertex->getId();
+            $this->pushVertex($vertex);
 
             $prevVertex = $vertices[$vertexKey - 1] ?? false;
             if ($prevVertex) {
@@ -171,13 +152,15 @@ class Walk
                 ) {
                     throw new InvalidArgumentException('Invalid steps ! Vertex ' . $prevVertex->getId() . ' does not have Neighbor Vertex ' . $vertex->getId() . ' !');
                 }
+
                 $outgoingEdges = $prevVertex->getOutgoingEdgesTo($vertex);
                 if (count($outgoingEdges) > 1) {
                     throw new InvalidArgumentException('Unknown steps ! There are more than one Edges from ' . $prevVertex->getId() . ' to ' . $vertex->getId() . ' !');
                 }
-                $this->edges[] = $outgoingEdges[array_key_first($outgoingEdges)];
+
+                $outgoingEdge = $outgoingEdges[array_key_first($outgoingEdges)];
+                $this->pushEdge($outgoingEdge);
             }
-            $this->vertices[] = $vertex;
         }
         if (
             $this->isLoop() &&
@@ -196,6 +179,30 @@ class Walk
     public function addVertex(Vertex $nextVertex): void
     {
         $this->addVertices([$nextVertex]);
+    }
+
+    private function pushVertex(Vertex|array $nextVertex): void
+    {
+        if (is_array($nextVertex)) {
+            foreach ($nextVertex as $vertex) {
+                $this->pushVertex($vertex);
+            }
+        } else {
+            $verticesIds = array_map(function (Vertex $vertex) {
+                return $vertex->getId();
+            }, $this->getVertices());
+
+            if ($nextVertex->getGraph() !== $this->getGraph()) {
+                throw new InvalidArgumentException('Vertices must be in a same Graph !');
+            }
+            if (
+                !$this->canRepeatVertices() &&
+                in_array($nextVertex->getId(), $verticesIds)
+            ) {
+                throw new InvalidArgumentException('Vertices must be unique !');
+            }
+            $this->vertices[] = $nextVertex;
+        }
     }
 
     /**
@@ -224,21 +231,11 @@ class Walk
         $edges = array_merge($this->getEdges(), $edges);
         $this->vertices = [];
         $this->edges = [];
-        $edgesIds = [];
         foreach ($edges as $edgeKey => $edge) {
             if (!$edge instanceof AbstractEdge) {
                 throw new InvalidArgumentException('Edges must be array of AbstractEdge !');
             }
-            if ($edge->getGraph() !== $this->getGraph()) {
-                throw new InvalidArgumentException('Edges must be in a same Graph !');
-            }
-            if (
-                !$this->canRepeatEdges() &&
-                in_array($edge->getId(), $edgesIds)
-            ) {
-                throw new InvalidArgumentException('Edges must be unique !');
-            }
-            $edgesIds[] = $edge->getId();
+            $this->pushEdge($edge);
 
             $prevEdge = $edges[$edgeKey - 1] ?? false;
             if ($prevEdge) {
@@ -248,17 +245,16 @@ class Walk
                 } else if (count($outgoingVertices) == 0) {
                     $outgoingVertices = array_diff($edge->getVertices(), [$this->vertices[array_key_last($this->vertices)]]);
                 }
-                $this->edges[] = $edge;
-                $this->vertices[] = $outgoingVertices[array_key_last($outgoingVertices)];
+                $this->pushVertex($outgoingVertices[array_key_last($outgoingVertices)]);
             } else {
                 $vertices = $edge->getVertices();
                 $nextEdge = $edges[$edgeKey + 1] ?? false;
-                $this->edges[] = $edge;
                 if ($nextEdge) {
-                    $this->vertices = array_merge(array_diff($vertices, $nextEdge->getVertices()), array_intersect($vertices, $nextEdge->getVertices()));
+                    $this->pushVertex(array_diff($vertices, $nextEdge->getVertices()));
+                    $this->pushVertex(array_intersect($vertices, $nextEdge->getVertices()));
                 } else {
-                    $this->vertices[] = $vertices[array_key_first($vertices)];
-                    $this->vertices[] = $vertices[array_key_last($vertices)];
+                    $this->pushVertex($vertices[array_key_first($vertices)]);
+                    $this->pushVertex($vertices[array_key_last($vertices)]);
                 }
             }
         }
@@ -279,5 +275,29 @@ class Walk
     public function addEdge(AbstractEdge $nextEdge): void
     {
         $this->addEdges([$nextEdge]);
+    }
+
+    private function pushEdge(AbstractEdge|array $nextEdge)
+    {
+        if (is_array($nextEdge)) {
+            foreach ($nextEdge as $edge) {
+                $this->pushEdge($edge);
+            }
+        } else {
+            $edgesIds = array_map(function (AbstractEdge $edge) {
+                return $edge->getId();
+            }, $this->getEdges());
+
+            if ($nextEdge->getGraph() !== $this->getGraph()) {
+                throw new InvalidArgumentException('Edges must be in a same Graph !');
+            }
+            if (
+                !$this->canRepeatEdges() &&
+                in_array($nextEdge->getId(), $edgesIds)
+            ) {
+                throw new InvalidArgumentException('Edges must be unique !');
+            }
+            $this->edges[] = $nextEdge;
+        }
     }
 }

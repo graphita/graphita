@@ -4,8 +4,5 @@ namespace Graphita\Graphita;
 
 class Trail extends Walk
 {
-    /**
-     * @var bool
-     */
-    private bool $repeatEdges = false;
+    const REPEAT_EDGES = false;
 }
