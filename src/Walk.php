@@ -201,7 +201,12 @@ class Walk
             }
             if (
                 !$this->canRepeatVertices() &&
-                in_array($nextVertex->getId(), $verticesIds)
+                in_array($nextVertex->getId(), $verticesIds) &&
+                !(
+                    $this->isLoop() &&
+                    count(array_keys($verticesIds, $nextVertex->getId())) == 1 &&
+                    $verticesIds[0] == $nextVertex->getId()
+                )
             ) {
                 throw new InvalidArgumentException('Vertices must be unique !');
             }
