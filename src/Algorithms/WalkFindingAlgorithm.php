@@ -105,7 +105,7 @@ class WalkFindingAlgorithm
     public function setDestination(Vertex &$destination): static
     {
         if ($destination->getGraph() !== $this->getGraph()) {
-            throw new InvalidArgumentException('Source Vertex must be in Graph !');
+            throw new InvalidArgumentException('Destination Vertex must be in Graph !');
         }
         $this->destination = $destination;
         return $this;
@@ -229,13 +229,10 @@ class WalkFindingAlgorithm
                     return $vertexId != $this->getSource()->getId() && $vertexId != $this->getDestination()->getId();
                 }));
 
-                $graph = $this->getGraph();
-                $walk = new $this->traversType($graph);
-
                 $permutation = new Permutation();
                 $permutation->setItems($verticesId);
                 $permutation->setSelection($verticesCount);
-                $permutation->setRepetitions($walk->canRepeatVertices());
+                $permutation->setRepetitions(true);
                 $permutation->calculate();
                 $possibilities = $permutation->getPossibilities();
                 foreach ($possibilities as $possibility) {
