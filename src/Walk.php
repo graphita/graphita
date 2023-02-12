@@ -181,6 +181,10 @@ class Walk
         $this->addVertices([$nextVertex]);
     }
 
+    /**
+     * @param \Graphita\Graphita\Vertex|array $nextVertex
+     * @return void
+     */
     private function pushVertex(Vertex|array $nextVertex): void
     {
         if (is_array($nextVertex)) {
@@ -277,7 +281,11 @@ class Walk
         $this->addEdges([$nextEdge]);
     }
 
-    private function pushEdge(AbstractEdge|array $nextEdge)
+    /**
+     * @param AbstractEdge|array $nextEdge
+     * @return void
+     */
+    private function pushEdge(AbstractEdge|array $nextEdge): void
     {
         if (is_array($nextEdge)) {
             foreach ($nextEdge as $edge) {
