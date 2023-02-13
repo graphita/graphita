@@ -46,10 +46,7 @@ class WalkFindingAlgorithm
      */
     private array $results = [];
 
-    /**
-     * @var string
-     */
-    private string $traversType = Walk::class;
+    const TRAVERSE_TYPE = Walk::class;
 
     /**
      * @param Graph $graph
@@ -290,7 +287,7 @@ class WalkFindingAlgorithm
     {
         try {
             $graph = $this->getGraph();
-            $walk = new $this->traversType($graph);
+            $walk = new (static::TRAVERSE_TYPE)($graph);
             $walk->addEdges($result);
             $this->results[] = $walk;
 

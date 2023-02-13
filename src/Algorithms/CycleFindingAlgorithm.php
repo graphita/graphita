@@ -6,5 +6,5 @@ use Graphita\Graphita\Cycle;
 
 class CycleFindingAlgorithm extends WalkFindingAlgorithm
 {
-    private string $traversType = Cycle::class;
+    const TRAVERSE_TYPE = Cycle::class;
 }

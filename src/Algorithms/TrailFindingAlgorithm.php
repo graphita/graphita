@@ -6,5 +6,5 @@ use Graphita\Graphita\Trail;
 
 class TrailFindingAlgorithm extends WalkFindingAlgorithm
 {
-    private string $traversType = Trail::class;
+    const TRAVERSE_TYPE = Trail::class;
 }

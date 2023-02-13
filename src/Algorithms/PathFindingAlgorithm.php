@@ -6,5 +6,5 @@ use Graphita\Graphita\Path;
 
 class PathFindingAlgorithm extends WalkFindingAlgorithm
 {
-    private string $traversType = Path::class;
+    const TRAVERSE_TYPE = Path::class;
 }
