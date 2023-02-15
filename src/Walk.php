@@ -105,7 +105,7 @@ class Walk
     /**
      * @return void
      */
-    private function calculateTotalWeight(): void
+    public function calculateTotalWeight(): void
     {
         $this->totalWeight = array_reduce($this->getEdges(), function ($totalWeight, AbstractEdge $edge) {
             $totalWeight += $edge->getWeight();

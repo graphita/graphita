@@ -188,7 +188,7 @@ class WalkFindingAlgorithm
      */
     public function countResults(): int
     {
-        return count( $this->getResults() );
+        return count($this->getResults());
     }
 
     /**
@@ -315,7 +315,7 @@ class WalkFindingAlgorithm
      */
     public function getShortestResult(): ?Walk
     {
-        if( $this->countResults() ){
+        if ($this->countResults()) {
             return $this->getResults()[array_key_first($this->getResults())];
         }
         return null;
@@ -326,9 +326,21 @@ class WalkFindingAlgorithm
      */
     public function getLongestResult(): ?Walk
     {
-        if( $this->countResults() ){
+        if ($this->countResults()) {
             return $this->getResults()[array_key_last($this->getResults())];
         }
         return null;
+    }
+
+    /**
+     * @return $this
+     */
+    public function calculateTotalWeight(): static
+    {
+        array_map(function (Walk $walk) {
+            $walk->calculateTotalWeight();
+        }, $this->getResults());
+        $this->sortResults();
+        return $this;
     }
 }
