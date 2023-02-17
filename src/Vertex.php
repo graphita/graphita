@@ -26,7 +26,17 @@ class Vertex
     /**
      * @var array
      */
+    private array $incomingEdgesFrom = array();
+
+    /**
+     * @var array
+     */
     private array $outgoingEdges = array();
+
+    /**
+     * @var array
+     */
+    private array $outgoingEdgesTo = array();
 
     /**
      * @var array
@@ -115,14 +125,7 @@ class Vertex
     {
         if (!$this->hasIncomingNeighbors($sourceVertex->getId()))
             throw new Exception('Vertex ' . $this->getId() . ' has no Edge from Vertex ' . $sourceVertex->getId());
-        return array_filter($this->getIncomingEdges(), function ($edge) use ($sourceVertex) {
-            if ($edge instanceof UndirectedEdge) {
-                return $edge->hasVertex($sourceVertex->getId());
-            } else if ($edge instanceof DirectedEdge) {
-                return $edge->getSource() === $sourceVertex;
-            }
-            return false;
-        });
+        return $this->incomingEdgesFrom[$sourceVertex->getId()] ?? [];
     }
 
     /**
@@ -134,14 +137,7 @@ class Vertex
     {
         if (!$this->hasOutgoingNeighbors($destinationVertex->getId()))
             throw new Exception('Vertex ' . $this->getId() . ' has no Edge to Vertex ' . $destinationVertex->getId());
-        return array_filter($this->getOutgoingEdges(), function ($edge) use ($destinationVertex) {
-            if ($edge instanceof UndirectedEdge) {
-                return $edge->hasVertex($destinationVertex->getId());
-            } else if ($edge instanceof DirectedEdge) {
-                return $edge->getDestination() === $destinationVertex;
-            }
-            return false;
-        });
+        return $this->outgoingEdgesTo[$destinationVertex->getId()] ?? [];
     }
 
     /**
@@ -161,6 +157,8 @@ class Vertex
     {
         if ($edge->getGraph() !== $this->getGraph())
             throw new Exception('Edge & Vertex have to be within the same graph !');
+        if (array_key_exists($edge->getId(), $this->edges))
+            throw new Exception('Vertex ' . $this->getId() . ' has connected to Edge ' . $edge->getId() . ' before !');
         $this->edges[$edge->getId()] = $edge;
         if ($edge instanceof UndirectedEdge && $edge->hasVertex($this->getId())) {
             $this->incomingEdges[$edge->getId()] = $edge;
@@ -250,18 +248,29 @@ class Vertex
     private function calculateNeighbors(): void
     {
         $this->neighbors = [];
+        $this->incomingEdgesFrom = [];
+        $this->outgoingEdgesTo = [];
         array_map(function ($edge) {
             $neighbor = current(array_filter($edge->getVertices(), function (Vertex $vertex) {
                 return $vertex->getId() != $this->getId();
             }));
-            $this->neighbors[$neighbor->getId()] = $neighbor;
+            if( !array_key_exists($neighbor->getId(), $this->neighbors) ){
+                $this->neighbors[$neighbor->getId()] = $neighbor;
+                $this->incomingEdgesFrom[$neighbor->getId()] = [];
+                $this->outgoingEdgesTo[$neighbor->getId()] = [];
+            }
+
             if ($edge instanceof UndirectedEdge) {
                 $this->incomingNeighbors[$neighbor->getId()] = $neighbor;
                 $this->outgoingNeighbors[$neighbor->getId()] = $neighbor;
+                $this->incomingEdgesFrom[$neighbor->getId()][$edge->getId()] = $edge;
+                $this->outgoingEdgesTo[$neighbor->getId()][$edge->getId()] = $edge;
             } else if ($edge instanceof DirectedEdge && $edge->getDestination()->getId() == $this->getId()) {
                 $this->incomingNeighbors[$neighbor->getId()] = $neighbor;
+                $this->incomingEdgesFrom[$neighbor->getId()][$edge->getId()] = $edge;
             } else if ($edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()) {
                 $this->outgoingNeighbors[$neighbor->getId()] = $neighbor;
+                $this->outgoingEdgesTo[$neighbor->getId()][$edge->getId()] = $edge;
             }
         }, $this->getEdges());
     }
