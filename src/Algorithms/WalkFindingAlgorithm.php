@@ -257,7 +257,8 @@ class WalkFindingAlgorithm
             foreach ($verticesId as $vertexKey => $vertexId) {
                 $prevVertexId = $verticesId[$vertexKey - 1] ?? false;
                 if ($prevVertexId) {
-                    $incomingEdges = $this->getGraph()->getVertex($vertexId)->getIncomingEdgesFrom($this->getGraph()->getVertex($prevVertexId));
+                    $prevVertex = $this->getGraph()->getVertex($prevVertexId);
+                    $incomingEdges = $this->getGraph()->getVertex($vertexId)->getIncomingEdgesFrom($prevVertex);
                     if (count($edges) > 0) {
                         $traveledRoutes = $edges;
                         $edges = [];
