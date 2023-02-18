@@ -32,7 +32,7 @@ class Graph
     /**
      * @return string
      */
-    function __toString()
+    public function __toString()
     {
         return 'Graph Information:' . json_encode($this->getAttributes()) . PHP_EOL .
             'Vertices:' . implode(',', array_map(function ($vertex) {

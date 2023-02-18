@@ -50,7 +50,7 @@ class Walk
     /**
      * @return string
      */
-    function __toString()
+    public function __toString()
     {
         return 'Graph Information:' . json_encode($this->graph->getAttributes()) . PHP_EOL .
             'Vertices:' . implode(',', array_map(function ($vertex) {

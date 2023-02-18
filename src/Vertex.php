@@ -75,7 +75,7 @@ class Vertex
     /**
      * @return string
      */
-    function __toString()
+    public function __toString()
     {
         return 'Vertex Id:' . $this->getId() . PHP_EOL .
             'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
@@ -254,7 +254,7 @@ class Vertex
             $neighbor = current(array_filter($edge->getVertices(), function (Vertex $vertex) {
                 return $vertex->getId() != $this->getId();
             }));
-            if( !array_key_exists($neighbor->getId(), $this->neighbors) ){
+            if (!array_key_exists($neighbor->getId(), $this->neighbors)) {
                 $this->neighbors[$neighbor->getId()] = $neighbor;
                 $this->incomingEdgesFrom[$neighbor->getId()] = [];
                 $this->outgoingEdgesTo[$neighbor->getId()] = [];
