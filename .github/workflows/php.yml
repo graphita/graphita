@@ -10,10 +10,15 @@ permissions:
   contents: read
 
 jobs:
-  build:
-
+  PHPUnit:
+    name: PHPUnit (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php:
+          - 8.2
+          - 8.1
+          - 8.0
     steps:
     - uses: actions/checkout@v3
 
