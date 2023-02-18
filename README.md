@@ -4,7 +4,6 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/graphita/graphita.svg?logo=github&logoColor=white&style=flat-square)](https://packagist.org/packages/graphita/graphita)
 [![GitHub Checks Status](https://img.shields.io/github/actions/workflow/status/graphita/graphita/php.yml?logo=github-actions&logoColor=white&style=flat-square)](https://github.com/graphita/graphita/actions)
 [![Quality Score](https://img.shields.io/scrutinizer/quality/g/graphita/graphita.svg?logo=scrutinizer&style=flat-square)](https://scrutinizer-ci.com/g/graphita/graphita)
-[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/graphita/graphita/main?logo=scrutinizer&style=flat-square)](https://scrutinizer-ci.com/g/graphita/graphita)
 
 PHP Mathematics Library for easier calculation of Graph !
 
