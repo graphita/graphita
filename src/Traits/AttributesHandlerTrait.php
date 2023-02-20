@@ -22,7 +22,7 @@ trait AttributesHandlerTrait
      * @param $default
      * @return mixed|null
      */
-    public function getAttribute($key, $default = null)
+    public function getAttribute($key, $default = null): mixed
     {
         return $this->attributes[$key] ?? $default;
     }
