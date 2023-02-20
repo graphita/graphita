@@ -230,9 +230,8 @@ class WalkFindingAlgorithm
                 $permutation->setItems($verticesId);
                 $permutation->setSelection($verticesCount);
                 $permutation->setRepetitions(true);
-                $permutation->calculate();
-                $possibilities = $permutation->getPossibilities();
-                foreach ($possibilities as $possibility) {
+                $generator = $permutation->calculateWithoutSave();
+                foreach ($generator as $possibility) {
                     array_unshift($possibility, $this->getSource()->getId());
                     array_push($possibility, $this->getDestination()->getId());
 
