@@ -21,7 +21,7 @@
     ],
     "require": {
         "php": ">=8.0",
-        "graphita/mathematics": "^1.2.1"
+        "graphita/mathematics": "^1.3.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
