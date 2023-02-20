@@ -30,28 +30,31 @@ trait AttributesHandlerTrait
     /**
      * @param $key
      * @param $value
-     * @return void
+     * @return AttributesHandlerTrait
      */
-    public function setAttribute($key, $value): void
+    public function setAttribute($key, $value): static
     {
         $this->attributes[$key] = $value;
+        return $this;
     }
 
     /**
      * @param array $attributes
-     * @return void
+     * @return AttributesHandlerTrait
      */
-    public function setAttributes(array $attributes): void
+    public function setAttributes(array $attributes): static
     {
         $this->attributes = $attributes + $this->attributes;
+        return $this;
     }
 
     /**
      * @param $key
-     * @return void
+     * @return AttributesHandlerTrait
      */
-    public function removeAttribute($key): void
+    public function removeAttribute($key): static
     {
         unset($this->attributes[$key]);
+        return $this;
     }
 }
