@@ -75,6 +75,19 @@ class UndirectedEdgeTest extends TestCase
         $this->assertNull($undirectedEdge->getAttribute('name'));
     }
 
+    public function testEmptyUndirectedEdgeAttributes()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $undirectedEdge = $graph->createUndirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+        $undirectedEdge->emptyAttributes();
+
+        $this->assertIsArray($undirectedEdge->getAttributes());
+        $this->assertCount(0, $undirectedEdge->getAttributes());
+        $this->assertNull($undirectedEdge->getAttribute('name'));
+    }
+
     public function testGetUndirectedEdgeId()
     {
         $graph = new Graph();

@@ -54,6 +54,61 @@ class CycleTest extends TestCase
         $this->assertFalse($cycle->canRepeatVertices());
         $this->assertFalse($cycle->canRepeatEdges());
         $this->assertTrue($cycle->isLoop());
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertEmpty($cycle->getAttributes());
+    }
+
+    public function testGetCycleAttributes()
+    {
+        $cycle = new Cycle($this->graph, ['name' => 'Euler Cycle']);
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertCount(1, $cycle->getAttributes());
+        $this->assertEquals('Euler Cycle', $cycle->getAttribute('name'));
+        $this->assertEquals('Euler Cycle', $cycle->getAttribute('name', 'Leonhard Cycle'));
+        $this->assertNull($cycle->getAttribute('color'));
+        $this->assertEquals('Red', $cycle->getAttribute('color', 'Red'));
+    }
+
+    public function testSetCycleAttribute()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->setAttribute('name', 'Euler Cycle');
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertCount(1, $cycle->getAttributes());
+        $this->assertEquals('Euler Cycle', $cycle->getAttribute('name'));
+    }
+
+    public function testSetCycleAttributes()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->setAttributes(['name' => 'Euler Cycle']);
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertCount(1, $cycle->getAttributes());
+        $this->assertEquals('Euler Cycle', $cycle->getAttribute('name'));
+    }
+
+    public function testRemoveCycleAttribute()
+    {
+        $cycle = new Cycle($this->graph, ['name' => 'Euler Cycle']);
+        $cycle->removeAttribute('name');
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertCount(0, $cycle->getAttributes());
+        $this->assertNull($cycle->getAttribute('name'));
+    }
+
+    public function testEmptyCycleAttributes()
+    {
+        $cycle = new Cycle($this->graph, ['name' => 'Euler Cycle']);
+        $cycle->emptyAttributes();
+
+        $this->assertIsArray($cycle->getAttributes());
+        $this->assertCount(0, $cycle->getAttributes());
+        $this->assertNull($cycle->getAttribute('name'));
     }
 
     public function testAddVerticesWithArrayOfNonVertex()

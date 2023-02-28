@@ -57,6 +57,17 @@ class VertexTest extends TestCase
         $this->assertNull($vertex->getAttribute('name'));
     }
 
+    public function testEmptyVertexAttributes()
+    {
+        $graph = new Graph();
+        $vertex = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex->emptyAttributes();
+
+        $this->assertIsArray($vertex->getAttributes());
+        $this->assertCount(0, $vertex->getAttributes());
+        $this->assertNull($vertex->getAttribute('name'));
+    }
+
     public function testGetVertexId()
     {
         $graph = new Graph();

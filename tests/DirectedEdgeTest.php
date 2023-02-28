@@ -75,6 +75,19 @@ class DirectedEdgeTest extends TestCase
         $this->assertNull($directedEdge->getAttribute('name'));
     }
 
+    public function testEmptyDirectedEdgeAttributes()
+    {
+        $graph = new Graph();
+        $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
+        $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
+        $directedEdge = $graph->createDirectedEdge($vertex1, $vertex2, ['name' => 'Route 66']);
+        $directedEdge->emptyAttributes();
+
+        $this->assertIsArray($directedEdge->getAttributes());
+        $this->assertCount(0, $directedEdge->getAttributes());
+        $this->assertNull($directedEdge->getAttribute('name'));
+    }
+
     public function testGetDirectedEdgeId()
     {
         $graph = new Graph();

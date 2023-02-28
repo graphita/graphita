@@ -54,6 +54,61 @@ class CircuitTest extends TestCase
         $this->assertTrue($circuit->canRepeatVertices());
         $this->assertFalse($circuit->canRepeatEdges());
         $this->assertTrue($circuit->isLoop());
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertEmpty($circuit->getAttributes());
+    }
+
+    public function testGetCircuitAttributes()
+    {
+        $circuit = new Circuit($this->graph, ['name' => 'Euler Circuit']);
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertCount(1, $circuit->getAttributes());
+        $this->assertEquals('Euler Circuit', $circuit->getAttribute('name'));
+        $this->assertEquals('Euler Circuit', $circuit->getAttribute('name', 'Leonhard Circuit'));
+        $this->assertNull($circuit->getAttribute('color'));
+        $this->assertEquals('Red', $circuit->getAttribute('color', 'Red'));
+    }
+
+    public function testSetCircuitAttribute()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->setAttribute('name', 'Euler Circuit');
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertCount(1, $circuit->getAttributes());
+        $this->assertEquals('Euler Circuit', $circuit->getAttribute('name'));
+    }
+
+    public function testSetCircuitAttributes()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->setAttributes(['name' => 'Euler Circuit']);
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertCount(1, $circuit->getAttributes());
+        $this->assertEquals('Euler Circuit', $circuit->getAttribute('name'));
+    }
+
+    public function testRemoveCircuitAttribute()
+    {
+        $circuit = new Circuit($this->graph, ['name' => 'Euler Circuit']);
+        $circuit->removeAttribute('name');
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertCount(0, $circuit->getAttributes());
+        $this->assertNull($circuit->getAttribute('name'));
+    }
+
+    public function testEmptyCircuitAttributes()
+    {
+        $circuit = new Circuit($this->graph, ['name' => 'Euler Circuit']);
+        $circuit->emptyAttributes();
+
+        $this->assertIsArray($circuit->getAttributes());
+        $this->assertCount(0, $circuit->getAttributes());
+        $this->assertNull($circuit->getAttribute('name'));
     }
 
     public function testAddVerticesWithArrayOfNonVertex()
