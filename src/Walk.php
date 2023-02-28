@@ -5,6 +5,7 @@ namespace Graphita\Graphita;
 use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\DirectedEdge;
 use Graphita\Graphita\Graph;
+use Graphita\Graphita\Traits\AttributesHandlerTrait;
 use Graphita\Graphita\UndirectedEdge;
 use Graphita\Graphita\Vertex;
 use Exception;
@@ -38,13 +39,16 @@ class Walk
 
     const IS_LOOP = false;
 
+    use AttributesHandlerTrait;
+
     /**
      * @param Graph $graph
      * @throws Exception
      */
-    public function __construct(Graph &$graph)
+    public function __construct(Graph &$graph, array $attributes = array())
     {
         $this->graph = $graph;
+        $this->setAttributes($attributes);
     }
 
     /**
