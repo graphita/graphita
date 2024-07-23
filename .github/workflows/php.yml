@@ -48,3 +48,9 @@ jobs:
 
     - name: Execute tests (Unit and Feature tests) via PHPUnit
       run: vendor/bin/phpunit --coverage-text --testdox --coverage-clover=coverage.clover
+
+    - name: Code Coverage
+      continue-on-error: true
+      run: |
+        wget https://scrutinizer-ci.com/ocular.phar
+        php ocular.phar code-coverage:upload --format=php-clover coverage.clover
