@@ -2,33 +2,40 @@
 
 namespace Graphita\Graphita;
 
-class DirectedEdge extends Abstracts\AbstractEdge
+use Graphita\Graphita\Abstracts\AbstractEdge;
+
+class DirectedEdge extends AbstractEdge
 {
-
     /**
-     * @var Vertex
+     * @param Vertex $source
+     * @param Vertex $destination
+     * @param Graph $graph
+     * @param array $attributes
      */
-    private Vertex $source;
-
-    /**
-     * @var Vertex
-     */
-    private Vertex $destination;
-
     public function __construct(Vertex &$source, Vertex &$destination, Graph &$graph, array $attributes = array())
     {
         parent::__construct($source, $destination, $graph, $attributes);
-        $this->source = $source;
-        $this->destination = $destination;
     }
 
+    /**
+     * @return Vertex
+     */
     public function getSource(): Vertex
     {
-        return $this->source;
+        $vertices = $this->getVertices();
+        $verticesId = array_keys($vertices);
+
+        return $vertices[$verticesId[0]];
     }
 
+    /**
+     * @return Vertex
+     */
     public function getDestination(): Vertex
     {
-        return $this->destination;
+        $vertices = $this->getVertices();
+        $verticesId = array_keys($vertices);
+
+        return $vertices[$verticesId[1]];
     }
 }
