@@ -32,7 +32,6 @@ class CircuitTest extends TestCase
         $this->edges['3-4'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[4]);
         $this->edges['4-1-1'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
         $this->edges['4-1-2'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
-        $this->edges['3-1'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[1]);
     }
 
     public function testEmptyCircuit()
@@ -40,6 +39,18 @@ class CircuitTest extends TestCase
         $circuit = new Circuit($this->graph);
 
         $this->assertEquals($this->graph, $circuit->getGraph());
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(0, $circuit->getSteps());
+        $this->assertEquals(0, $circuit->countSteps());
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $firstStep = $circuit->getFirstStep();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $lastStep = $circuit->getLastStep();
 
         $this->assertIsArray($circuit->getVertices());
         $this->assertCount(0, $circuit->getVertices());
@@ -49,6 +60,9 @@ class CircuitTest extends TestCase
         $this->assertCount(0, $circuit->getEdges());
         $this->assertEquals(0, $circuit->countEdges());
 
+        $this->assertFalse($circuit->isStarted());
+        $this->assertFalse($circuit->isFinished());
+
         $this->assertEquals(0, $circuit->getTotalWeight());
 
         $this->assertTrue($circuit->canRepeatVertices());
@@ -56,16 +70,104 @@ class CircuitTest extends TestCase
         $this->assertTrue($circuit->isLoop());
     }
 
-    public function testAddVerticesWithArrayOfNonVertex()
+    public function testStartingViaConstructor()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Vertices must be array of Vertex !');
+        $circuit = new Circuit($this->graph, $this->vertices[1]);
 
-        $circuit = new Circuit($this->graph);
-        $circuit->addVertices([1, 2, 3]);
+        $this->assertEquals($this->graph, $circuit->getGraph());
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(1, $circuit->getSteps());
+        $this->assertEquals(1, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[1], $circuit->getLastStep());
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(1, $circuit->getVertices());
+        $this->assertEquals(1, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+
+        $this->assertTrue($circuit->isStarted());
+        $this->assertFalse($circuit->isFinished());
+
+        $this->assertEquals(0, $circuit->getTotalWeight());
     }
 
-    public function testAddVerticesWithOutsideOfGraphVertex()
+    public function testStarting()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->start($this->vertices[1]);
+
+        $this->assertEquals($this->graph, $circuit->getGraph());
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(1, $circuit->getSteps());
+        $this->assertEquals(1, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[1], $circuit->getLastStep());
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(1, $circuit->getVertices());
+        $this->assertEquals(1, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+
+        $this->assertTrue($circuit->isStarted());
+        $this->assertFalse($circuit->isFinished());
+
+        $this->assertEquals(0, $circuit->getTotalWeight());
+    }
+
+    public function testDuplicateStarting()
+    {
+        $circuit = new Circuit($this->graph);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk started before !');
+
+        $circuit->start($this->vertices[1]);
+        $circuit->start($this->vertices[2]);
+    }
+
+    public function testFinishingWhenSourceAndDestinationNotSame()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+        $circuit->addStep($this->vertices[2]);
+        $circuit->addStep($this->vertices[3]);
+        $circuit->addStep($this->vertices[4]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Source Vertex and Destination Vertex must be Equal !');
+
+        $circuit->finish();
+    }
+
+    public function testFinishing()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+        $circuit->addStep($this->vertices[2]);
+        $circuit->addStep($this->vertices[3]);
+        $circuit->addStep($this->vertices[4]);
+
+        $this->assertFalse($circuit->isFinished());
+
+        $circuit->addStep($this->vertices[1], $this->edges['4-1-1']);
+
+        $this->assertTrue($circuit->isFinished());
+
+        $circuit->finish();
+
+        $this->assertTrue($circuit->isFinished());
+    }
+
+    public function testAddStepWithOutsideOfGraphVertex()
     {
         $anotherGraph = new Graph();
         $anotherVertex = $anotherGraph->createVertex(1);
@@ -74,101 +176,10 @@ class CircuitTest extends TestCase
         $this->expectExceptionMessage('Vertices must be in a same Graph !');
 
         $circuit = new Circuit($this->graph);
-        $circuit->addVertices([$anotherVertex]);
+        $circuit->addStep($anotherVertex);
     }
 
-    public function testAddVerticesWithInvalidSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! Vertex ' . $this->vertices[2]->getId() . ' does not have Neighbor Vertex ' . $this->vertices[4]->getId() . ' !');
-
-        $circuit = new Circuit($this->graph);
-        $circuit->addVertices([
-            $this->vertices[2],
-            $this->vertices[4],
-        ]);
-    }
-
-    public function testAddVerticesWithUnknownSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown steps ! There are more than one Edges from ' . $this->vertices[4]->getId() . ' to ' . $this->vertices[1]->getId() . ' !');
-
-        $circuit = new Circuit($this->graph);
-        $circuit->addVertices([
-            $this->vertices[4],
-            $this->vertices[1],
-        ]);
-    }
-
-    public function testAddVerticesWithoutLoop()
-    {
-        $circuit = new Circuit($this->graph);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
-
-        $circuit->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[4],
-        ]);
-    }
-
-    public function testAddVertices()
-    {
-        $circuit = new Circuit($this->graph);
-        $circuit->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[1],
-        ]);
-
-        $this->assertIsArray($circuit->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $circuit->getVertices());
-        $this->assertCount(4, $circuit->getVertices());
-        $this->assertEquals(4, $circuit->countVertices());
-
-        $this->assertIsArray($circuit->getEdges());
-        $this->assertCount(3, $circuit->getEdges());
-        $this->assertEquals(3, $circuit->countEdges());
-        $this->assertEquals($this->edges['1-2'], $circuit->getEdges()[0]);
-        $this->assertEquals($this->edges['2-3'], $circuit->getEdges()[1]);
-        $this->assertEquals($this->edges['3-1'], $circuit->getEdges()[2]);
-    }
-
-    public function testAddVertex()
-    {
-        $circuit = new Circuit($this->graph);
-        $circuit->addVertex($this->vertices[1]);
-
-        $this->assertIsArray($circuit->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $circuit->getVertices());
-        $this->assertCount(1, $circuit->getVertices());
-        $this->assertEquals(1, $circuit->countVertices());
-
-        $this->assertIsArray($circuit->getEdges());
-        $this->assertCount(0, $circuit->getEdges());
-        $this->assertEquals(0, $circuit->countEdges());
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
-
-        $circuit->addVertex($this->vertices[2]);
-    }
-
-    public function testAddEdgesWithArrayOfNonEdge()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Edges must be array of AbstractEdge !');
-
-        $circuit = new Circuit($this->graph);
-        $circuit->addEdges([1, 2, 3]);
-    }
-
-    public function testAddEdgesWithOutsideOfGraphEdge()
+    public function testAddStepWithOutsideOfGraphThroughEdge()
     {
         $anotherGraph = new Graph();
         $anotherVertex1 = $anotherGraph->createVertex(1);
@@ -179,93 +190,243 @@ class CircuitTest extends TestCase
         $this->expectExceptionMessage('Edges must be in a same Graph !');
 
         $circuit = new Circuit($this->graph);
-        $circuit->addEdges([$anotherEdge]);
+        $circuit->addStep($this->vertices[1], $anotherEdge);
     }
 
-    public function testAddEdgesWithInvalidSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! There is no common Vertex between Edge ' . $this->edges['1-2']->getId() . ' and ' . $this->edges['3-4']->getId() . ' !');
-
-        $circuit = new Circuit($this->graph);
-        $circuit->addEdges([
-            $this->edges['1-2'],
-            $this->edges['3-4'],
-        ]);
-    }
-
-    public function testAddDuplicateEdges()
+    public function testAddStepWhenFinished()
     {
         $circuit = new Circuit($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Edges must be unique !');
-
-        $circuit->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['1-2'],
-        ]);
-    }
-
-    public function testAddEdgesWithoutLoop()
-    {
-        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+        $circuit->addStep($this->vertices[2]);
+        $circuit->addStep($this->vertices[3]);
+        $circuit->addStep($this->vertices[4]);
+        $circuit->addStep($this->vertices[1], $this->edges['4-1-1']);
+        $circuit->finish();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
+        $this->expectExceptionMessage('Walk is finished before !');
 
-        $circuit->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['3-4'],
-        ]);
+        $circuit->addStep($this->vertices[3]);
     }
 
-    public function testAddEdges()
+    public function testStartingByAddStep()
     {
         $circuit = new Circuit($this->graph);
-        $circuit->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['3-1'],
-        ]);
 
-        $this->assertIsArray($circuit->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $circuit->getEdges());
-        $this->assertCount(3, $circuit->getEdges());
-        $this->assertEquals(3, $circuit->countEdges());
+        $this->assertFalse($circuit->isStarted());
+
+        $circuit->addStep($this->vertices[1]);
+
+        $this->assertTrue($circuit->isStarted());
+    }
+
+    public function testAddStepNotNeighborVertices()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex has no Edges to new Vertex !');
+
+        $circuit->addStep($this->vertices[3]);
+    }
+
+    public function testAddStepMultiEdgesVertices()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('There is many Edges between Prev Vertex and Next Vertex !');
+
+        $circuit->addStep($this->vertices[4]);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToPrevVertex()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex is not connected to Through Edge !');
+
+        $circuit->addStep($this->vertices[2], $this->edges['3-4']);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToNextVertex()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Next Vertex is not connected to Through Edge !');
+
+        $circuit->addStep($this->vertices[2], $this->edges['4-1-1']);
+    }
+
+    public function testAddStepWithRepeatEdge()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+        $circuit->addStep($this->vertices[2]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You can\'t Repeat Edge !');
+
+        $circuit->addStep($this->vertices[1]);
+    }
+
+    public function testAddStepWithoutThroughEdge()
+    {
+        $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(1, $circuit->getSteps());
+        $this->assertEquals(1, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[1], $circuit->getLastStep());
 
         $this->assertIsArray($circuit->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $circuit->getVertices());
-        $this->assertCount(4, $circuit->getVertices());
-        $this->assertEquals(4, $circuit->countVertices());
-        $this->assertEquals($this->vertices[1], $circuit->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $circuit->getVertices()[1]);
-        $this->assertEquals($this->vertices[3], $circuit->getVertices()[2]);
-        $this->assertEquals($this->vertices[1], $circuit->getVertices()[3]);
+        $this->assertCount(1, $circuit->getVertices());
+        $this->assertEquals(1, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+
+        $steps = $circuit->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $circuit->addStep($this->vertices[2]);
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(3, $circuit->getSteps());
+        $this->assertEquals(3, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[2], $circuit->getLastStep());
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(2, $circuit->getVertices());
+        $this->assertEquals(2, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(1, $circuit->getEdges());
+        $this->assertEquals(1, $circuit->countEdges());
+
+        $steps = $circuit->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
     }
 
-    public function testAddEdge()
+    public function testAddStepWithThroughEdge()
     {
         $circuit = new Circuit($this->graph);
+        $circuit->addStep($this->vertices[1]);
 
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(1, $circuit->getSteps());
+        $this->assertEquals(1, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[1], $circuit->getLastStep());
 
-        $circuit->addEdge($this->edges['1-2']);
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(1, $circuit->getVertices());
+        $this->assertEquals(1, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+
+        $steps = $circuit->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $circuit->addStep($this->vertices[2], $this->edges['1-2']);
+
+        $this->assertIsArray($circuit->getSteps());
+        $this->assertCount(3, $circuit->getSteps());
+        $this->assertEquals(3, $circuit->countSteps());
+        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
+        $this->assertEquals($this->vertices[2], $circuit->getLastStep());
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(2, $circuit->getVertices());
+        $this->assertEquals(2, $circuit->countVertices());
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(1, $circuit->getEdges());
+        $this->assertEquals(1, $circuit->countEdges());
+
+        $steps = $circuit->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
     }
 
     public function testGetTotalWeight()
     {
         $circuit = new Circuit($this->graph);
-        $circuit->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[1],
-        ]);
+        $circuit->addStep($this->vertices[1]);
+
+        $this->assertEquals(0, $circuit->getTotalWeight());
+
+        $circuit->addStep($this->vertices[2]);
+
+        $this->assertEquals(1, $circuit->getTotalWeight());
+
+        $circuit->addStep($this->vertices[3]);
+
+        $this->assertEquals(2, $circuit->getTotalWeight());
+
+        $circuit->addStep($this->vertices[4]);
 
         $this->assertEquals(3, $circuit->getTotalWeight());
+    }
+
+    public function testGetVertices()
+    {
+        $circuit = new Circuit($this->graph);
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(0, $circuit->getVertices());
+        $this->assertEquals(0, $circuit->countVertices());
+
+        $circuit->addStep($this->vertices[1]);
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(1, $circuit->getVertices());
+        $this->assertEquals(1, $circuit->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $circuit->getVertices());
+
+        $circuit->addStep($this->vertices[2]);
+
+        $this->assertIsArray($circuit->getVertices());
+        $this->assertCount(2, $circuit->getVertices());
+        $this->assertEquals(2, $circuit->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $circuit->getVertices());
+    }
+
+    public function testGetEdges()
+    {
+        $circuit = new Circuit($this->graph);
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+
+        $circuit->addStep($this->vertices[1]);
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(0, $circuit->getEdges());
+        $this->assertEquals(0, $circuit->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $circuit->getEdges());
+
+        $circuit->addStep($this->vertices[2]);
+
+        $this->assertIsArray($circuit->getEdges());
+        $this->assertCount(1, $circuit->getEdges());
+        $this->assertEquals(1, $circuit->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $circuit->getEdges());
     }
 }
