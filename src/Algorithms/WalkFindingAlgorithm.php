@@ -150,7 +150,7 @@ class WalkFindingAlgorithm
     {
         if ($minSteps < 1) {
             throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or bigger than 1 !');
-        } else if ($this->getMaxSteps() != null && $minSteps > $this->getMaxSteps()) {
+        } else if ($this->getMaxSteps() !== null && $minSteps > $this->getMaxSteps()) {
             throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or less than Max Steps !');
         }
         $this->minSteps = $minSteps;
@@ -174,7 +174,7 @@ class WalkFindingAlgorithm
     {
         if ($maxSteps < 1) {
             throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than 1 !');
-        } else if ($this->getMinSteps() != null && $maxSteps < $this->getMinSteps()) {
+        } else if ($this->getMinSteps() !== null && $maxSteps < $this->getMinSteps()) {
             throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than Min Steps !');
         }
         $this->maxSteps = $maxSteps;
@@ -211,7 +211,7 @@ class WalkFindingAlgorithm
             throw new Exception('Destination must be set, before calculate !');
         }
 
-        if (! $this->getSteps()) {
+        if ($this->getSteps() === null) {
             for ($step = $this->getMinSteps(); $step <= $this->getMaxSteps(); $step++) {
                 $walks = (new static($this->graph))
                     ->setSource($this->source)
