@@ -3,11 +3,13 @@
 namespace Graphita\Graphita\Algorithms;
 
 use Exception;
+use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Vertex;
 use Graphita\Graphita\Walk;
-use Graphita\Mathematics\Permutation;
 use InvalidArgumentException;
+use ReflectionClass;
+use Throwable;
 
 class WalkFindingAlgorithm
 {
@@ -78,12 +80,13 @@ class WalkFindingAlgorithm
      * @param Vertex $source
      * @return WalkFindingAlgorithm
      */
-    public function setSource(Vertex &$source): static
+    public function setSource(Vertex &$source): WalkFindingAlgorithm
     {
         if ($source->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Source Vertex must be in Graph !');
         }
         $this->source = $source;
+
         return $this;
     }
 
@@ -99,12 +102,13 @@ class WalkFindingAlgorithm
      * @param Vertex $destination
      * @return WalkFindingAlgorithm
      */
-    public function setDestination(Vertex &$destination): static
+    public function setDestination(Vertex &$destination): WalkFindingAlgorithm
     {
         if ($destination->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Destination Vertex must be in Graph !');
         }
         $this->destination = $destination;
+
         return $this;
     }
 
@@ -120,12 +124,13 @@ class WalkFindingAlgorithm
      * @param int $steps
      * @return WalkFindingAlgorithm
      */
-    public function setSteps(int $steps): static
+    public function setSteps(int $steps): WalkFindingAlgorithm
     {
         if ($steps < 1) {
             throw new InvalidArgumentException('Steps must be Positive Integer Number equal or bigger than 1 !');
         }
         $this->steps = $steps;
+
         return $this;
     }
 
@@ -141,7 +146,7 @@ class WalkFindingAlgorithm
      * @param int $minSteps
      * @return WalkFindingAlgorithm
      */
-    public function setMinSteps(int $minSteps): static
+    public function setMinSteps(int $minSteps): WalkFindingAlgorithm
     {
         if ($minSteps < 1) {
             throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or bigger than 1 !');
@@ -149,6 +154,7 @@ class WalkFindingAlgorithm
             throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or less than Max Steps !');
         }
         $this->minSteps = $minSteps;
+
         return $this;
     }
 
@@ -164,7 +170,7 @@ class WalkFindingAlgorithm
      * @param int $maxSteps
      * @return WalkFindingAlgorithm
      */
-    public function setMaxSteps(int $maxSteps): static
+    public function setMaxSteps(int $maxSteps): WalkFindingAlgorithm
     {
         if ($maxSteps < 1) {
             throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than 1 !');
@@ -172,6 +178,7 @@ class WalkFindingAlgorithm
             throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than Min Steps !');
         }
         $this->maxSteps = $maxSteps;
+
         return $this;
     }
 
@@ -195,106 +202,104 @@ class WalkFindingAlgorithm
      * @return $this
      * @throws Exception
      */
-    public function calculate(): static
+    public function calculate(): WalkFindingAlgorithm
     {
-
-        if (!$this->getSource()) {
+        if (! $this->getSource()) {
             throw new Exception('Source must be set, before calculate !');
         }
-        if (!$this->getDestination()) {
+        if (! $this->getDestination()) {
             throw new Exception('Destination must be set, before calculate !');
         }
-        if (!$this->getSteps()) {
+
+        if (! $this->getSteps()) {
             for ($step = $this->getMinSteps(); $step <= $this->getMaxSteps(); $step++) {
-                $walks = (new static($this->graph))->setSource($this->source)->setDestination($this->destination)->setSteps($step)->calculate()->getResults();
-                foreach ($walks as $walk) {
-                    $this->addResult($walk->getEdges());
-                }
+                $walks = (new static($this->graph))
+                    ->setSource($this->source)
+                    ->setDestination($this->destination)
+                    ->setSteps($step)
+                    ->calculate()
+                    ->getResults();
+
+                $this->addResults($walks);
             }
         } else {
-            $verticesCount = $this->getSteps() - 1;
-            if ($verticesCount == 0) {
-                $edges = $this->getEdgesBetweenVertices([$this->getSource()->getId(), $this->getDestination()->getId()]);
-                foreach ($edges as $edge) {
-                    $this->addResult($edge);
-                }
-            } else {
-                $verticesId = array_map(function (Vertex $vertex) {
-                    return $vertex->getId();
-                }, $this->getGraph()->getVertices());
-                $verticesId = array_values(array_filter($verticesId, function ($vertexId) {
-                    return $vertexId != $this->getSource()->getId() && $vertexId != $this->getDestination()->getId();
-                }));
+            $graph = $this->getGraph();
 
-                $permutation = new Permutation();
-                $permutation->setItems($verticesId);
-                $permutation->setSelection($verticesCount);
-                $permutation->setRepetitions(true);
-                $generator = $permutation->calculateWithoutSave();
-                foreach ($generator as $possibility) {
-                    array_unshift($possibility, $this->getSource()->getId());
-                    array_push($possibility, $this->getDestination()->getId());
+            /** @var Walk[] $walks */
+            $walks = [];
+            $walks[] = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
+                &$graph,
+                $this->getSource()
+            ]);
 
-                    $edges = $this->getEdgesBetweenVertices($possibility);
-                    foreach ($edges as $edge) {
-                        $this->addResult($edge);
+            for ($step = 1; $step <= $this->getSteps(); $step++) {
+                $newWalks = [];
+
+                foreach ($walks as $walk) {
+                    /** @var Vertex $lastVertex */
+                    $lastVertex = $walk->getLastStep();
+
+                    /** @var AbstractEdge[] $outgoingEdges */
+                    $outgoingEdges = $lastVertex->getOutgoingEdges();
+
+                    foreach ($outgoingEdges as $outgoingEdge) {
+                        /** @var Vertex[] $vertices */
+                        $vertices = $outgoingEdge->getVertices();
+
+                        /** @var array $verticesId */
+                        $verticesId = array_keys($vertices);
+
+                        $nextVertex = $vertices[$verticesId[0]]->getId() == $lastVertex->getId() ? $vertices[$verticesId[1]] : $vertices[$verticesId[0]];
+
+                        try {
+                            $newWalk = clone $walk;
+                            $newWalk->addStep($nextVertex, $outgoingEdge);
+
+                            $newWalks[] = $newWalk;
+                        } catch (Throwable $exception) {
+
+                        }
                     }
                 }
+
+                $newWalks = array_filter($newWalks, function (Walk $newWalk) {
+                    return $newWalk->countEdges() <= $this->getSteps();
+                });
+
+                $walks = $newWalks;
             }
+
+            foreach ($walks as $walk) {
+                try {
+                    $walk->finish();
+                } catch (Throwable $exception) {
+
+                }
+            }
+
+            $walks = array_filter($walks, function (Walk $walk) {
+                return $walk->isFinished() &&
+                    $walk->countEdges() == $this->getSteps() &&
+                    $walk->getFirstStep()->getId() == $this->getSource()->getId() &&
+                    $walk->getLastStep()->getId() == $this->getDestination()->getId();
+            });
+
+            $this->addResults($walks);
         }
         return $this;
     }
 
     /**
-     * @param array $verticesId
-     * @return array
-     */
-    private function getEdgesBetweenVertices(array $verticesId): array
-    {
-        try {
-            $edges = [];
-            foreach ($verticesId as $vertexKey => $vertexId) {
-                $prevVertexId = $verticesId[$vertexKey - 1] ?? false;
-                if ($prevVertexId) {
-                    $prevVertex = $this->getGraph()->getVertex($prevVertexId);
-                    $incomingEdges = $this->getGraph()->getVertex($vertexId)->getIncomingEdgesFrom($prevVertex);
-                    if (count($edges) > 0) {
-                        $traveledRoutes = $edges;
-                        $edges = [];
-                        foreach ($traveledRoutes as $traveledRoute) {
-                            foreach ($incomingEdges as $incomingEdge) {
-                                $edges[] = array_merge($traveledRoute, [$incomingEdge]);
-                            }
-                        }
-                    } else {
-                        foreach ($incomingEdges as $incomingEdge) {
-                            $edges[] = [$incomingEdge];
-                        }
-                    }
-                }
-            }
-        } catch (Exception $exception) {
-            $edges = [];
-        }
-        return $edges;
-    }
-
-    /**
-     * @param array $result
+     * @param Walk[] $walks
      * @return void
      */
-    private function addResult(array $result): void
+    private function addResults(array $walks): void
     {
-        try {
-            $graph = $this->getGraph();
-            $walk = new (static::TRAVERSE_TYPE)($graph);
-            $walk->addEdges($result);
+        foreach ($walks as $walk) {
             $this->results[] = $walk;
-
-            $this->sortResults();
-        } catch (Exception $exception) {
-
         }
+
+        $this->sortResults();
     }
 
     /**
@@ -302,11 +307,12 @@ class WalkFindingAlgorithm
      */
     private function sortResults(): void
     {
-        usort($this->results, function (Walk $result1, Walk $result2) {
-            if ($result1->getTotalWeight() == $result2->getTotalWeight()) {
-                return $result1->countEdges() > $result2->countEdges() ? 1 : -1;
+        usort($this->results, function (Walk $walk1, Walk $walk2) {
+            if ($walk1->getTotalWeight() == $walk2->getTotalWeight()) {
+                return $walk1->countEdges() >= $walk2->countEdges() ? 1 : -1;
             }
-            return $result1->getTotalWeight() > $result2->getTotalWeight() ? 1 : -1;
+
+            return $walk1->getTotalWeight() > $walk2->getTotalWeight() ? 1 : -1;
         });
     }
 
@@ -316,8 +322,9 @@ class WalkFindingAlgorithm
     public function getShortestResult(): ?Walk
     {
         if ($this->countResults()) {
-            return $this->getResults()[array_key_first($this->getResults())];
+            return $this->getResults()[0];
         }
+
         return null;
     }
 
@@ -327,20 +334,9 @@ class WalkFindingAlgorithm
     public function getLongestResult(): ?Walk
     {
         if ($this->countResults()) {
-            return $this->getResults()[array_key_last($this->getResults())];
+            return $this->getResults()[$this->countResults() - 1];
         }
-        return null;
-    }
 
-    /**
-     * @return $this
-     */
-    public function calculateTotalWeight(): static
-    {
-        array_map(function (Walk $walk) {
-            $walk->calculateTotalWeight();
-        }, $this->getResults());
-        $this->sortResults();
-        return $this;
+        return null;
     }
 }
