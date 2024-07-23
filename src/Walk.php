@@ -2,8 +2,13 @@
 
 namespace Graphita\Graphita;
 
-use Exception;
 use Graphita\Graphita\Abstracts\AbstractEdge;
+use Graphita\Graphita\DirectedEdge;
+use Graphita\Graphita\Graph;
+use Graphita\Graphita\Traits\AttributesHandlerTrait;
+use Graphita\Graphita\UndirectedEdge;
+use Graphita\Graphita\Vertex;
+use Exception;
 use InvalidArgumentException;
 
 class Walk
@@ -39,14 +44,17 @@ class Walk
 
     const IS_LOOP = false;
 
+    use AttributesHandlerTrait;
+
     /**
      * @param Graph $graph
      * @param Vertex|null $sourceVertex
      * @throws Exception
      */
-    public function __construct(Graph &$graph, ?Vertex $sourceVertex = null)
+    public function __construct(Graph &$graph, ?Vertex $sourceVertex = null, array $attributes = array())
     {
         $this->graph = $graph;
+        $this->setAttributes($attributes);
 
         if( $sourceVertex ){
             $this->start($sourceVertex);

@@ -69,6 +69,61 @@ class PathTest extends TestCase
         $this->assertFalse($path->canRepeatVertices());
         $this->assertFalse($path->canRepeatEdges());
         $this->assertFalse($path->isLoop());
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertEmpty($path->getAttributes());
+    }
+
+    public function testGetPathAttributes()
+    {
+        $path = new Path($this->graph, ['name' => 'Euler Path']);
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertCount(1, $path->getAttributes());
+        $this->assertEquals('Euler Path', $path->getAttribute('name'));
+        $this->assertEquals('Euler Path', $path->getAttribute('name', 'Leonhard Path'));
+        $this->assertNull($path->getAttribute('color'));
+        $this->assertEquals('Red', $path->getAttribute('color', 'Red'));
+    }
+
+    public function testSetPathAttribute()
+    {
+        $path = new Path($this->graph);
+        $path->setAttribute('name', 'Euler Path');
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertCount(1, $path->getAttributes());
+        $this->assertEquals('Euler Path', $path->getAttribute('name'));
+    }
+
+    public function testSetPathAttributes()
+    {
+        $path = new Path($this->graph);
+        $path->setAttributes(['name' => 'Euler Path']);
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertCount(1, $path->getAttributes());
+        $this->assertEquals('Euler Path', $path->getAttribute('name'));
+    }
+
+    public function testRemovePathAttribute()
+    {
+        $path = new Path($this->graph, ['name' => 'Euler Path']);
+        $path->removeAttribute('name');
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertCount(0, $path->getAttributes());
+        $this->assertNull($path->getAttribute('name'));
+    }
+
+    public function testEmptyPathAttributes()
+    {
+        $path = new Path($this->graph, ['name' => 'Euler Path']);
+        $path->emptyAttributes();
+
+        $this->assertIsArray($path->getAttributes());
+        $this->assertCount(0, $path->getAttributes());
+        $this->assertNull($path->getAttribute('name'));
     }
 
     public function testStartingViaConstructor()

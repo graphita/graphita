@@ -68,6 +68,61 @@ class WalkTest extends TestCase
         $this->assertTrue($walk->canRepeatVertices());
         $this->assertFalse($walk->canRepeatEdges());
         $this->assertFalse($walk->isLoop());
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertEmpty($walk->getAttributes());
+    }
+
+    public function testGetWalkAttributes()
+    {
+        $walk = new Walk($this->graph, ['name' => 'Euler Walk']);
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertCount(1, $walk->getAttributes());
+        $this->assertEquals('Euler Walk', $walk->getAttribute('name'));
+        $this->assertEquals('Euler Walk', $walk->getAttribute('name', 'Leonhard Walk'));
+        $this->assertNull($walk->getAttribute('color'));
+        $this->assertEquals('Red', $walk->getAttribute('color', 'Red'));
+    }
+
+    public function testSetWalkAttribute()
+    {
+        $walk = new Walk($this->graph);
+        $walk->setAttribute('name', 'Euler Walk');
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertCount(1, $walk->getAttributes());
+        $this->assertEquals('Euler Walk', $walk->getAttribute('name'));
+    }
+
+    public function testSetWalkAttributes()
+    {
+        $walk = new Walk($this->graph);
+        $walk->setAttributes(['name' => 'Euler Walk']);
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertCount(1, $walk->getAttributes());
+        $this->assertEquals('Euler Walk', $walk->getAttribute('name'));
+    }
+
+    public function testRemoveWalkAttribute()
+    {
+        $walk = new Walk($this->graph, ['name' => 'Euler Walk']);
+        $walk->removeAttribute('name');
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertCount(0, $walk->getAttributes());
+        $this->assertNull($walk->getAttribute('name'));
+    }
+
+    public function testEmptyWalkAttributes()
+    {
+        $walk = new Walk($this->graph, ['name' => 'Euler Walk']);
+        $walk->emptyAttributes();
+
+        $this->assertIsArray($walk->getAttributes());
+        $this->assertCount(0, $walk->getAttributes());
+        $this->assertNull($walk->getAttribute('name'));
     }
 
     public function testStartingViaConstructor()

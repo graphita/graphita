@@ -57,4 +57,14 @@ trait AttributesHandlerTrait
         unset($this->attributes[$key]);
         return $this;
     }
+
+    /**
+     * @return AttributesHandlerTrait
+     */
+    public function emptyAttributes(): static
+    {
+        unset($this->attributes);
+        $this->attributes = array();
+        return $this;
+    }
 }

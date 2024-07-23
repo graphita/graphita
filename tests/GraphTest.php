@@ -69,6 +69,16 @@ class GraphTest extends TestCase
         $this->assertNull($graph->getAttribute('name'));
     }
 
+    public function testEmptyGraphAttributes()
+    {
+        $graph = new Graph(['name' => 'Euler Graph']);
+        $graph->emptyAttributes();
+
+        $this->assertIsArray($graph->getAttributes());
+        $this->assertCount(0, $graph->getAttributes());
+        $this->assertNull($graph->getAttribute('name'));
+    }
+
     public function testCreateVertex()
     {
         $graph = new Graph(['name' => 'Euler Graph']);

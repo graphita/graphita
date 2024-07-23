@@ -70,6 +70,61 @@ class TrailTest extends TestCase
         $this->assertTrue($trail->canRepeatVertices());
         $this->assertFalse($trail->canRepeatEdges());
         $this->assertFalse($trail->isLoop());
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertEmpty($trail->getAttributes());
+    }
+
+    public function testGetTrailAttributes()
+    {
+        $trail = new Trail($this->graph, ['name' => 'Euler Trail']);
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertCount(1, $trail->getAttributes());
+        $this->assertEquals('Euler Trail', $trail->getAttribute('name'));
+        $this->assertEquals('Euler Trail', $trail->getAttribute('name', 'Leonhard Trail'));
+        $this->assertNull($trail->getAttribute('color'));
+        $this->assertEquals('Red', $trail->getAttribute('color', 'Red'));
+    }
+
+    public function testSetTrailAttribute()
+    {
+        $trail = new Trail($this->graph);
+        $trail->setAttribute('name', 'Euler Trail');
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertCount(1, $trail->getAttributes());
+        $this->assertEquals('Euler Trail', $trail->getAttribute('name'));
+    }
+
+    public function testSetTrailAttributes()
+    {
+        $trail = new Trail($this->graph);
+        $trail->setAttributes(['name' => 'Euler Trail']);
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertCount(1, $trail->getAttributes());
+        $this->assertEquals('Euler Trail', $trail->getAttribute('name'));
+    }
+
+    public function testRemoveTrailAttribute()
+    {
+        $trail = new Trail($this->graph, ['name' => 'Euler Trail']);
+        $trail->removeAttribute('name');
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertCount(0, $trail->getAttributes());
+        $this->assertNull($trail->getAttribute('name'));
+    }
+
+    public function testEmptyTrailAttributes()
+    {
+        $trail = new Trail($this->graph, ['name' => 'Euler Trail']);
+        $trail->emptyAttributes();
+
+        $this->assertIsArray($trail->getAttributes());
+        $this->assertCount(0, $trail->getAttributes());
+        $this->assertNull($trail->getAttribute('name'));
     }
 
     public function testStartingViaConstructor()
