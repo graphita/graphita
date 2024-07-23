@@ -32,7 +32,7 @@ class CycleTest extends TestCase
         $this->edges['3-4'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[4]);
         $this->edges['4-1-1'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
         $this->edges['4-1-2'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
-        $this->edges['3-1'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[1]);
+        $this->edges['4-2'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[2]);
     }
 
     public function testEmptyCycle()
@@ -40,6 +40,18 @@ class CycleTest extends TestCase
         $cycle = new Cycle($this->graph);
 
         $this->assertEquals($this->graph, $cycle->getGraph());
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(0, $cycle->getSteps());
+        $this->assertEquals(0, $cycle->countSteps());
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $firstStep = $cycle->getFirstStep();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $lastStep = $cycle->getLastStep();
 
         $this->assertIsArray($cycle->getVertices());
         $this->assertCount(0, $cycle->getVertices());
@@ -49,6 +61,9 @@ class CycleTest extends TestCase
         $this->assertCount(0, $cycle->getEdges());
         $this->assertEquals(0, $cycle->countEdges());
 
+        $this->assertFalse($cycle->isStarted());
+        $this->assertFalse($cycle->isFinished());
+
         $this->assertEquals(0, $cycle->getTotalWeight());
 
         $this->assertFalse($cycle->canRepeatVertices());
@@ -56,16 +71,104 @@ class CycleTest extends TestCase
         $this->assertTrue($cycle->isLoop());
     }
 
-    public function testAddVerticesWithArrayOfNonVertex()
+    public function testStartingViaConstructor()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Vertices must be array of Vertex !');
+        $cycle = new Cycle($this->graph, $this->vertices[1]);
 
-        $cycle = new Cycle($this->graph);
-        $cycle->addVertices([1, 2, 3]);
+        $this->assertEquals($this->graph, $cycle->getGraph());
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(1, $cycle->getSteps());
+        $this->assertEquals(1, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[1], $cycle->getLastStep());
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(1, $cycle->getVertices());
+        $this->assertEquals(1, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+
+        $this->assertTrue($cycle->isStarted());
+        $this->assertFalse($cycle->isFinished());
+
+        $this->assertEquals(0, $cycle->getTotalWeight());
     }
 
-    public function testAddVerticesWithOutsideOfGraphVertex()
+    public function testStarting()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->start($this->vertices[1]);
+
+        $this->assertEquals($this->graph, $cycle->getGraph());
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(1, $cycle->getSteps());
+        $this->assertEquals(1, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[1], $cycle->getLastStep());
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(1, $cycle->getVertices());
+        $this->assertEquals(1, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+
+        $this->assertTrue($cycle->isStarted());
+        $this->assertFalse($cycle->isFinished());
+
+        $this->assertEquals(0, $cycle->getTotalWeight());
+    }
+
+    public function testDuplicateStarting()
+    {
+        $cycle = new Cycle($this->graph);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk started before !');
+
+        $cycle->start($this->vertices[1]);
+        $cycle->start($this->vertices[2]);
+    }
+
+    public function testFinishingWhenSourceAndDestinationNotSame()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+        $cycle->addStep($this->vertices[2]);
+        $cycle->addStep($this->vertices[3]);
+        $cycle->addStep($this->vertices[4]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Source Vertex and Destination Vertex must be Equal !');
+
+        $cycle->finish();
+    }
+
+    public function testFinishing()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+        $cycle->addStep($this->vertices[2]);
+        $cycle->addStep($this->vertices[3]);
+        $cycle->addStep($this->vertices[4]);
+
+        $this->assertFalse($cycle->isFinished());
+
+        $cycle->addStep($this->vertices[1], $this->edges['4-1-1']);
+
+        $this->assertTrue($cycle->isFinished());
+
+        $cycle->finish();
+
+        $this->assertTrue($cycle->isFinished());
+    }
+
+    public function testAddStepWithOutsideOfGraphVertex()
     {
         $anotherGraph = new Graph();
         $anotherVertex = $anotherGraph->createVertex(1);
@@ -74,117 +177,10 @@ class CycleTest extends TestCase
         $this->expectExceptionMessage('Vertices must be in a same Graph !');
 
         $cycle = new Cycle($this->graph);
-        $cycle->addVertices([$anotherVertex]);
+        $cycle->addStep($anotherVertex);
     }
 
-    public function testAddVerticesWithInvalidSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! Vertex ' . $this->vertices[2]->getId() . ' does not have Neighbor Vertex ' . $this->vertices[4]->getId() . ' !');
-
-        $cycle = new Cycle($this->graph);
-        $cycle->addVertices([
-            $this->vertices[2],
-            $this->vertices[4],
-        ]);
-    }
-
-    public function testAddVerticesWithUnknownSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown steps ! There are more than one Edges from ' . $this->vertices[4]->getId() . ' to ' . $this->vertices[1]->getId() . ' !');
-
-        $cycle = new Cycle($this->graph);
-        $cycle->addVertices([
-            $this->vertices[4],
-            $this->vertices[1],
-        ]);
-    }
-
-    public function testAddDuplicateVertices()
-    {
-        $cycle = new Cycle($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Vertices must be unique !');
-
-        $cycle->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[4],
-            $this->vertices[2],
-        ]);
-    }
-
-    public function testAddVerticesWithoutLoop()
-    {
-        $cycle = new Cycle($this->graph);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
-
-        $cycle->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[4],
-        ]);
-    }
-
-    public function testAddVertices()
-    {
-        $cycle = new Cycle($this->graph);
-        $cycle->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[1],
-        ]);
-
-        $this->assertIsArray($cycle->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $cycle->getVertices());
-        $this->assertCount(4, $cycle->getVertices());
-        $this->assertEquals(4, $cycle->countVertices());
-
-        $this->assertIsArray($cycle->getEdges());
-        $this->assertCount(3, $cycle->getEdges());
-        $this->assertEquals(3, $cycle->countEdges());
-        $this->assertEquals($this->edges['1-2'], $cycle->getEdges()[0]);
-        $this->assertEquals($this->edges['2-3'], $cycle->getEdges()[1]);
-        $this->assertEquals($this->edges['3-1'], $cycle->getEdges()[2]);
-    }
-
-    public function testAddVertex()
-    {
-        $cycle = new Cycle($this->graph);
-        $cycle->addVertex($this->vertices[1]);
-
-        $this->assertIsArray($cycle->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $cycle->getVertices());
-        $this->assertCount(1, $cycle->getVertices());
-        $this->assertEquals(1, $cycle->countVertices());
-
-        $this->assertIsArray($cycle->getEdges());
-        $this->assertCount(0, $cycle->getEdges());
-        $this->assertEquals(0, $cycle->countEdges());
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
-
-        $cycle->addVertex($this->vertices[2]);
-    }
-
-    public function testAddEdgesWithArrayOfNonEdge()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Edges must be array of AbstractEdge !');
-
-        $cycle = new Cycle($this->graph);
-        $cycle->addEdges([1, 2, 3]);
-    }
-
-    public function testAddEdgesWithOutsideOfGraphEdge()
+    public function testAddStepWithOutsideOfGraphThroughEdge()
     {
         $anotherGraph = new Graph();
         $anotherVertex1 = $anotherGraph->createVertex(1);
@@ -195,93 +191,257 @@ class CycleTest extends TestCase
         $this->expectExceptionMessage('Edges must be in a same Graph !');
 
         $cycle = new Cycle($this->graph);
-        $cycle->addEdges([$anotherEdge]);
+        $cycle->addStep($this->vertices[1], $anotherEdge);
     }
 
-    public function testAddEdgesWithInvalidSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! There is no common Vertex between Edge ' . $this->edges['1-2']->getId() . ' and ' . $this->edges['3-4']->getId() . ' !');
-
-        $cycle = new Cycle($this->graph);
-        $cycle->addEdges([
-            $this->edges['1-2'],
-            $this->edges['3-4'],
-        ]);
-    }
-
-    public function testAddDuplicateEdges()
+    public function testAddStepWhenFinished()
     {
         $cycle = new Cycle($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Edges must be unique !');
-
-        $cycle->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['1-2'],
-        ]);
-    }
-
-    public function testAddEdgesWithoutLoop()
-    {
-        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+        $cycle->addStep($this->vertices[2]);
+        $cycle->addStep($this->vertices[3]);
+        $cycle->addStep($this->vertices[4]);
+        $cycle->addStep($this->vertices[1], $this->edges['4-1-1']);
+        $cycle->finish();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
+        $this->expectExceptionMessage('Walk is finished before !');
 
-        $cycle->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['3-4'],
-        ]);
+        $cycle->addStep($this->vertices[2]);
     }
 
-    public function testAddEdges()
+    public function testStartingByAddStep()
     {
         $cycle = new Cycle($this->graph);
-        $cycle->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['3-1'],
-        ]);
 
-        $this->assertIsArray($cycle->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $cycle->getEdges());
-        $this->assertCount(3, $cycle->getEdges());
-        $this->assertEquals(3, $cycle->countEdges());
+        $this->assertFalse($cycle->isStarted());
+
+        $cycle->addStep($this->vertices[1]);
+
+        $this->assertTrue($cycle->isStarted());
+    }
+
+    public function testAddStepNotNeighborVertices()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex has no Edges to new Vertex !');
+
+        $cycle->addStep($this->vertices[3]);
+    }
+
+    public function testAddStepMultiEdgesVertices()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('There is many Edges between Prev Vertex and Next Vertex !');
+
+        $cycle->addStep($this->vertices[4]);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToPrevVertex()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex is not connected to Through Edge !');
+
+        $cycle->addStep($this->vertices[2], $this->edges['3-4']);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToNextVertex()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Next Vertex is not connected to Through Edge !');
+
+        $cycle->addStep($this->vertices[2], $this->edges['4-1-1']);
+    }
+
+    public function testAddStepWithRepeatVertices()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+        $cycle->addStep($this->vertices[2]);
+        $cycle->addStep($this->vertices[3]);
+        $cycle->addStep($this->vertices[4]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You can\'t Repeat Vertex !');
+
+        $cycle->addStep($this->vertices[2]);
+    }
+
+    public function testAddStepWithRepeatEdge()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+        $cycle->addStep($this->vertices[2]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You can\'t Repeat Edge !');
+
+        $cycle->addStep($this->vertices[1]);
+    }
+
+    public function testAddStepWithoutThroughEdge()
+    {
+        $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(1, $cycle->getSteps());
+        $this->assertEquals(1, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[1], $cycle->getLastStep());
 
         $this->assertIsArray($cycle->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $cycle->getVertices());
-        $this->assertCount(4, $cycle->getVertices());
-        $this->assertEquals(4, $cycle->countVertices());
-        $this->assertEquals($this->vertices[1], $cycle->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $cycle->getVertices()[1]);
-        $this->assertEquals($this->vertices[3], $cycle->getVertices()[2]);
-        $this->assertEquals($this->vertices[1], $cycle->getVertices()[3]);
+        $this->assertCount(1, $cycle->getVertices());
+        $this->assertEquals(1, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+
+        $steps = $cycle->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $cycle->addStep($this->vertices[2]);
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(3, $cycle->getSteps());
+        $this->assertEquals(3, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[2], $cycle->getLastStep());
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(2, $cycle->getVertices());
+        $this->assertEquals(2, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(1, $cycle->getEdges());
+        $this->assertEquals(1, $cycle->countEdges());
+
+        $steps = $cycle->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
     }
 
-    public function testAddEdge()
+    public function testAddStepWithThroughEdge()
     {
         $cycle = new Cycle($this->graph);
+        $cycle->addStep($this->vertices[1]);
 
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('First Vertex & Last Vertex must be same in Loop !');
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(1, $cycle->getSteps());
+        $this->assertEquals(1, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[1], $cycle->getLastStep());
 
-        $cycle->addEdge($this->edges['1-2']);
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(1, $cycle->getVertices());
+        $this->assertEquals(1, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+
+        $steps = $cycle->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $cycle->addStep($this->vertices[2], $this->edges['1-2']);
+
+        $this->assertIsArray($cycle->getSteps());
+        $this->assertCount(3, $cycle->getSteps());
+        $this->assertEquals(3, $cycle->countSteps());
+        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
+        $this->assertEquals($this->vertices[2], $cycle->getLastStep());
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(2, $cycle->getVertices());
+        $this->assertEquals(2, $cycle->countVertices());
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(1, $cycle->getEdges());
+        $this->assertEquals(1, $cycle->countEdges());
+
+        $steps = $cycle->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
     }
 
     public function testGetTotalWeight()
     {
         $cycle = new Cycle($this->graph);
-        $cycle->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[1],
-        ]);
+        $cycle->addStep($this->vertices[1]);
+
+        $this->assertEquals(0, $cycle->getTotalWeight());
+
+        $cycle->addStep($this->vertices[2]);
+
+        $this->assertEquals(1, $cycle->getTotalWeight());
+
+        $cycle->addStep($this->vertices[3]);
+
+        $this->assertEquals(2, $cycle->getTotalWeight());
+
+        $cycle->addStep($this->vertices[4]);
 
         $this->assertEquals(3, $cycle->getTotalWeight());
+    }
+
+    public function testGetVertices()
+    {
+        $cycle = new Cycle($this->graph);
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(0, $cycle->getVertices());
+        $this->assertEquals(0, $cycle->countVertices());
+
+        $cycle->addStep($this->vertices[1]);
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(1, $cycle->getVertices());
+        $this->assertEquals(1, $cycle->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $cycle->getVertices());
+
+        $cycle->addStep($this->vertices[2]);
+
+        $this->assertIsArray($cycle->getVertices());
+        $this->assertCount(2, $cycle->getVertices());
+        $this->assertEquals(2, $cycle->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $cycle->getVertices());
+    }
+
+    public function testGetEdges()
+    {
+        $cycle = new Cycle($this->graph);
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+
+        $cycle->addStep($this->vertices[1]);
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(0, $cycle->getEdges());
+        $this->assertEquals(0, $cycle->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $cycle->getEdges());
+
+        $cycle->addStep($this->vertices[2]);
+
+        $this->assertIsArray($cycle->getEdges());
+        $this->assertCount(1, $cycle->getEdges());
+        $this->assertEquals(1, $cycle->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $cycle->getEdges());
     }
 }
