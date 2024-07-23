@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Tests;
 
+use Exception;
 use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Vertex;
@@ -39,6 +40,18 @@ class WalkTest extends TestCase
 
         $this->assertEquals($this->graph, $walk->getGraph());
 
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(0, $walk->getSteps());
+        $this->assertEquals(0, $walk->countSteps());
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $firstStep = $walk->getFirstStep();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is not Started !');
+        $lastStep = $walk->getLastStep();
+
         $this->assertIsArray($walk->getVertices());
         $this->assertCount(0, $walk->getVertices());
         $this->assertEquals(0, $walk->countVertices());
@@ -47,23 +60,110 @@ class WalkTest extends TestCase
         $this->assertCount(0, $walk->getEdges());
         $this->assertEquals(0, $walk->countEdges());
 
+        $this->assertFalse($walk->isStarted());
+        $this->assertFalse($walk->isFinished());
+
         $this->assertEquals(0, $walk->getTotalWeight());
 
         $this->assertTrue($walk->canRepeatVertices());
-        $this->assertTrue($walk->canRepeatEdges());
+        $this->assertFalse($walk->canRepeatEdges());
         $this->assertFalse($walk->isLoop());
     }
 
-    public function testAddVerticesWithArrayOfNonVertex()
+    public function testStartingViaConstructor()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Vertices must be array of Vertex !');
+        $walk = new Walk($this->graph, $this->vertices[1]);
 
-        $walk = new Walk($this->graph);
-        $walk->addVertices([1, 2, 3]);
+        $this->assertEquals($this->graph, $walk->getGraph());
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(1, $walk->getSteps());
+        $this->assertEquals(1, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[1], $walk->getLastStep());
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(1, $walk->getVertices());
+        $this->assertEquals(1, $walk->countVertices());
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+
+        $this->assertTrue($walk->isStarted());
+        $this->assertFalse($walk->isFinished());
+
+        $this->assertEquals(0, $walk->getTotalWeight());
     }
 
-    public function testAddVerticesWithOutsideOfGraphVertex()
+    public function testStarting()
+    {
+        $walk = new Walk($this->graph);
+        $walk->start($this->vertices[1]);
+
+        $this->assertEquals($this->graph, $walk->getGraph());
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(1, $walk->getSteps());
+        $this->assertEquals(1, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[1], $walk->getLastStep());
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(1, $walk->getVertices());
+        $this->assertEquals(1, $walk->countVertices());
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+
+        $this->assertTrue($walk->isStarted());
+        $this->assertFalse($walk->isFinished());
+
+        $this->assertEquals(0, $walk->getTotalWeight());
+    }
+
+    public function testDuplicateStarting()
+    {
+        $walk = new Walk($this->graph);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk started before !');
+
+        $walk->start($this->vertices[1]);
+        $walk->start($this->vertices[2]);
+    }
+
+    public function testFinishingWhenSourceAndDestinationSame()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+        $walk->addStep($this->vertices[2]);
+        $walk->addStep($this->vertices[3]);
+        $walk->addStep($this->vertices[4]);
+        $walk->addStep($this->vertices[1], $this->edges['4-1-1']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Source Vertex and Destination Vertex shouldn\'t be Equal !');
+
+        $walk->finish();
+    }
+
+    public function testFinishing()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+        $walk->addStep($this->vertices[2]);
+        $walk->addStep($this->vertices[3]);
+
+        $this->assertFalse($walk->isFinished());
+
+        $walk->finish();
+
+        $this->assertTrue($walk->isFinished());
+    }
+
+    public function testAddStepWithOutsideOfGraphVertex()
     {
         $anotherGraph = new Graph();
         $anotherVertex = $anotherGraph->createVertex(1);
@@ -72,123 +172,10 @@ class WalkTest extends TestCase
         $this->expectExceptionMessage('Vertices must be in a same Graph !');
 
         $walk = new Walk($this->graph);
-        $walk->addVertices([$anotherVertex]);
+        $walk->addStep($anotherVertex);
     }
 
-    public function testAddVerticesWithInvalidSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! Vertex ' . $this->vertices[1]->getId() . ' does not have Neighbor Vertex ' . $this->vertices[3]->getId() . ' !');
-
-        $walk = new Walk($this->graph);
-        $walk->addVertices([
-            $this->vertices[1],
-            $this->vertices[3],
-        ]);
-    }
-
-    public function testAddVerticesWithUnknownSteps()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown steps ! There are more than one Edges from ' . $this->vertices[4]->getId() . ' to ' . $this->vertices[1]->getId() . ' !');
-
-        $walk = new Walk($this->graph);
-        $walk->addVertices([
-            $this->vertices[4],
-            $this->vertices[1],
-        ]);
-    }
-
-    public function testAddVertices()
-    {
-        $walk = new Walk($this->graph);
-        $walk->addVertices([
-            $this->vertices[1],
-            $this->vertices[2],
-            $this->vertices[3],
-            $this->vertices[4],
-        ]);
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(4, $walk->getVertices());
-        $this->assertEquals(4, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertCount(3, $walk->getEdges());
-        $this->assertEquals(3, $walk->countEdges());
-        $this->assertEquals($this->edges['1-2'], $walk->getEdges()[0]);
-        $this->assertEquals($this->edges['2-3'], $walk->getEdges()[1]);
-        $this->assertEquals($this->edges['3-4'], $walk->getEdges()[2]);
-    }
-
-    public function testAddVertex()
-    {
-        $walk = new Walk($this->graph);
-        $walk->addVertex($this->vertices[1]);
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(1, $walk->getVertices());
-        $this->assertEquals(1, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertCount(0, $walk->getEdges());
-        $this->assertEquals(0, $walk->countEdges());
-
-        $walk->addVertex($this->vertices[2]);
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(2, $walk->getVertices());
-        $this->assertEquals(2, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(1, $walk->getEdges());
-        $this->assertEquals(1, $walk->countEdges());
-        $this->assertEquals($this->edges['1-2'], $walk->getEdges()[0]);
-
-        $walk->addVertex($this->vertices[3]);
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(3, $walk->getVertices());
-        $this->assertEquals(3, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(2, $walk->getEdges());
-        $this->assertEquals(2, $walk->countEdges());
-        $this->assertEquals($this->edges['1-2'], $walk->getEdges()[0]);
-        $this->assertEquals($this->edges['2-3'], $walk->getEdges()[1]);
-
-        $walk->addVertex($this->vertices[4]);
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(4, $walk->getVertices());
-        $this->assertEquals(4, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(3, $walk->getEdges());
-        $this->assertEquals(3, $walk->countEdges());
-        $this->assertEquals($this->edges['1-2'], $walk->getEdges()[0]);
-        $this->assertEquals($this->edges['2-3'], $walk->getEdges()[1]);
-        $this->assertEquals($this->edges['3-4'], $walk->getEdges()[2]);
-    }
-
-    public function testAddEdgesWithArrayOfNonEdge()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Edges must be array of AbstractEdge !');
-
-        $walk = new Walk($this->graph);
-        $walk->addEdges([1, 2, 3]);
-    }
-
-    public function testAddEdgesWithOutsideOfGraphEdge()
+    public function testAddStepWithOutsideOfGraphThroughEdge()
     {
         $anotherGraph = new Graph();
         $anotherVertex1 = $anotherGraph->createVertex(1);
@@ -199,111 +186,228 @@ class WalkTest extends TestCase
         $this->expectExceptionMessage('Edges must be in a same Graph !');
 
         $walk = new Walk($this->graph);
-        $walk->addEdges([$anotherEdge]);
+        $walk->addStep($this->vertices[1], $anotherEdge);
     }
 
-    public function testAddEdgesWithInvalidSteps()
+    public function testAddStepWhenFinished()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid steps ! There is no common Vertex between Edge ' . $this->edges['1-2']->getId() . ' and ' . $this->edges['3-4']->getId() . ' !');
-
         $walk = new Walk($this->graph);
-        $walk->addEdges([
-            $this->edges['1-2'],
-            $this->edges['3-4'],
-        ]);
+        $walk->addStep($this->vertices[1]);
+        $walk->addStep($this->vertices[2]);
+        $walk->finish();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Walk is finished before !');
+
+        $walk->addStep($this->vertices[3]);
     }
 
-    public function testAddEdges()
+    public function testStartingByAddStep()
     {
         $walk = new Walk($this->graph);
-        $walk->addEdges([
-            $this->edges['1-2'],
-            $this->edges['2-3'],
-            $this->edges['3-4'],
-        ]);
 
-        $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(3, $walk->getEdges());
-        $this->assertEquals(3, $walk->countEdges());
+        $this->assertFalse($walk->isStarted());
+
+        $walk->addStep($this->vertices[1]);
+
+        $this->assertTrue($walk->isStarted());
+    }
+
+    public function testAddStepNotNeighborVertices()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex has no Edges to new Vertex !');
+
+        $walk->addStep($this->vertices[3]);
+    }
+
+    public function testAddStepMultiEdgesVertices()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('There is many Edges between Prev Vertex and Next Vertex !');
+
+        $walk->addStep($this->vertices[4]);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToPrevVertex()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Prev Vertex is not connected to Through Edge !');
+
+        $walk->addStep($this->vertices[2], $this->edges['3-4']);
+    }
+
+    public function testAddStepThroughEdgeThatNotConnectedToNextVertex()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Next Vertex is not connected to Through Edge !');
+
+        $walk->addStep($this->vertices[2], $this->edges['4-1-1']);
+    }
+
+    public function testAddStepWithoutThroughEdge()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(1, $walk->getSteps());
+        $this->assertEquals(1, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[1], $walk->getLastStep());
 
         $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(4, $walk->getVertices());
-        $this->assertEquals(4, $walk->countVertices());
-        $this->assertEquals($this->vertices[1], $walk->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $walk->getVertices()[1]);
-        $this->assertEquals($this->vertices[3], $walk->getVertices()[2]);
-        $this->assertEquals($this->vertices[4], $walk->getVertices()[3]);
-    }
-
-    public function testAddEdge()
-    {
-        $walk = new Walk($this->graph);
-        $walk->addEdge($this->edges['1-2']);
+        $this->assertCount(1, $walk->getVertices());
+        $this->assertEquals(1, $walk->countVertices());
 
         $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+
+        $steps = $walk->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $walk->addStep($this->vertices[2]);
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(3, $walk->getSteps());
+        $this->assertEquals(3, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[2], $walk->getLastStep());
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(2, $walk->getVertices());
+        $this->assertEquals(2, $walk->countVertices());
+
+        $this->assertIsArray($walk->getEdges());
         $this->assertCount(1, $walk->getEdges());
         $this->assertEquals(1, $walk->countEdges());
 
+        $steps = $walk->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
+    }
+
+    public function testAddStepWithThroughEdge()
+    {
+        $walk = new Walk($this->graph);
+        $walk->addStep($this->vertices[1]);
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(1, $walk->getSteps());
+        $this->assertEquals(1, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[1], $walk->getLastStep());
+
         $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
+        $this->assertCount(1, $walk->getVertices());
+        $this->assertEquals(1, $walk->countVertices());
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+
+        $steps = $walk->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+
+        $walk->addStep($this->vertices[2], $this->edges['1-2']);
+
+        $this->assertIsArray($walk->getSteps());
+        $this->assertCount(3, $walk->getSteps());
+        $this->assertEquals(3, $walk->countSteps());
+        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
+        $this->assertEquals($this->vertices[2], $walk->getLastStep());
+
+        $this->assertIsArray($walk->getVertices());
         $this->assertCount(2, $walk->getVertices());
         $this->assertEquals(2, $walk->countVertices());
-        $this->assertEquals($this->vertices[1], $walk->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $walk->getVertices()[1]);
-
-        $walk->addEdge($this->edges['2-3']);
 
         $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(2, $walk->getEdges());
-        $this->assertEquals(2, $walk->countEdges());
+        $this->assertCount(1, $walk->getEdges());
+        $this->assertEquals(1, $walk->countEdges());
 
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(3, $walk->getVertices());
-        $this->assertEquals(3, $walk->countVertices());
-        $this->assertEquals($this->vertices[1], $walk->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $walk->getVertices()[1]);
-        $this->assertEquals($this->vertices[3], $walk->getVertices()[2]);
-
-        $walk->addEdge($this->edges['3-4']);
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
-        $this->assertCount(3, $walk->getEdges());
-        $this->assertEquals(3, $walk->countEdges());
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
-        $this->assertCount(4, $walk->getVertices());
-        $this->assertEquals(4, $walk->countVertices());
-        $this->assertEquals($this->vertices[1], $walk->getVertices()[0]);
-        $this->assertEquals($this->vertices[2], $walk->getVertices()[1]);
-        $this->assertEquals($this->vertices[3], $walk->getVertices()[2]);
-        $this->assertEquals($this->vertices[4], $walk->getVertices()[3]);
+        $steps = $walk->getSteps();
+        $this->assertEquals($this->vertices[1], $steps[0]);
+        $this->assertEquals($this->edges['1-2'], $steps[1]);
+        $this->assertEquals($this->vertices[2], $steps[2]);
     }
 
     public function testGetTotalWeight()
     {
         $walk = new Walk($this->graph);
-        $walk->addVertex($this->vertices[1]);
+        $walk->addStep($this->vertices[1]);
 
         $this->assertEquals(0, $walk->getTotalWeight());
 
-        $walk->addVertex($this->vertices[2]);
+        $walk->addStep($this->vertices[2]);
 
         $this->assertEquals(1, $walk->getTotalWeight());
 
-        $walk->addVertex($this->vertices[3]);
+        $walk->addStep($this->vertices[3]);
 
         $this->assertEquals(2, $walk->getTotalWeight());
 
-        $walk->addVertex($this->vertices[4]);
+        $walk->addStep($this->vertices[4]);
 
         $this->assertEquals(3, $walk->getTotalWeight());
+    }
+
+    public function testGetVertices()
+    {
+        $walk = new Walk($this->graph);
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(0, $walk->getVertices());
+        $this->assertEquals(0, $walk->countVertices());
+
+        $walk->addStep($this->vertices[1]);
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(1, $walk->getVertices());
+        $this->assertEquals(1, $walk->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
+
+        $walk->addStep($this->vertices[2]);
+
+        $this->assertIsArray($walk->getVertices());
+        $this->assertCount(2, $walk->getVertices());
+        $this->assertEquals(2, $walk->countVertices());
+        $this->assertContainsOnlyInstancesOf(Vertex::class, $walk->getVertices());
+    }
+
+    public function testGetEdges()
+    {
+        $walk = new Walk($this->graph);
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+
+        $walk->addStep($this->vertices[1]);
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(0, $walk->getEdges());
+        $this->assertEquals(0, $walk->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
+
+        $walk->addStep($this->vertices[2]);
+
+        $this->assertIsArray($walk->getEdges());
+        $this->assertCount(1, $walk->getEdges());
+        $this->assertEquals(1, $walk->countEdges());
+        $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $walk->getEdges());
     }
 }
