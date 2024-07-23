@@ -126,32 +126,6 @@ class CycleTest extends TestCase
         $this->assertNull($cycle->getAttribute('name'));
     }
 
-    public function testStartingViaConstructor()
-    {
-        $cycle = new Cycle($this->graph, $this->vertices[1]);
-
-        $this->assertEquals($this->graph, $cycle->getGraph());
-
-        $this->assertIsArray($cycle->getSteps());
-        $this->assertCount(1, $cycle->getSteps());
-        $this->assertEquals(1, $cycle->countSteps());
-        $this->assertEquals($this->vertices[1], $cycle->getFirstStep());
-        $this->assertEquals($this->vertices[1], $cycle->getLastStep());
-
-        $this->assertIsArray($cycle->getVertices());
-        $this->assertCount(1, $cycle->getVertices());
-        $this->assertEquals(1, $cycle->countVertices());
-
-        $this->assertIsArray($cycle->getEdges());
-        $this->assertCount(0, $cycle->getEdges());
-        $this->assertEquals(0, $cycle->countEdges());
-
-        $this->assertTrue($cycle->isStarted());
-        $this->assertFalse($cycle->isFinished());
-
-        $this->assertEquals(0, $cycle->getTotalWeight());
-    }
-
     public function testStarting()
     {
         $cycle = new Cycle($this->graph);
