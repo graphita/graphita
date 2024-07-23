@@ -30,20 +30,6 @@ class Graph
     }
 
     /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return 'Graph Information:' . json_encode($this->getAttributes()) . PHP_EOL .
-            'Vertices:' . implode(',', array_map(function ($vertex) {
-                return $vertex->getId() . ':' . json_encode($vertex->getAttributes());
-            }, $this->getVertices())) . PHP_EOL .
-            'Edges:' . implode(',', array_map(function ($edge) {
-                return $edge->getId() . ':' . json_encode($edge->getAttributes());
-            }, $this->getEdges()));
-    }
-
-    /**
      * @return array
      */
     public function getVertices(): array
@@ -87,8 +73,10 @@ class Graph
     {
         if ($this->hasVertex($id))
             throw new Exception('Vertex exist !');
+
         $vertex = new Vertex($id, $this, $attributes);
         $this->vertices[$vertex->getId()] = $vertex;
+
         return $vertex;
     }
 
@@ -100,9 +88,12 @@ class Graph
     {
         if (!$this->hasVertex($id))
             return false;
-        array_map(function ($edge) {
+
+        $edges = $this->vertices[$id]->getEdges();
+        array_walk($edges, function ($edge) {
             $this->removeEdge($edge->getId());
-        }, $this->vertices[$id]->getEdges());
+        });
+
         unset($this->vertices[$id]);
         return true;
     }
@@ -133,24 +124,26 @@ class Graph
     }
 
     /**
-     * @param Vertex $sourceVertex
-     * @param Vertex $destinationVertex
+     * @param Vertex $vertexA
+     * @param Vertex $vertexB
      * @param array $attributes
      * @return UndirectedEdge
      * @throws Exception
      */
     public function createUndirectedEdge(
-        Vertex $sourceVertex,
-        Vertex $destinationVertex,
+        Vertex $vertexA,
+        Vertex $vertexB,
         array  $attributes = array()
     ): UndirectedEdge
     {
-        if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
+        if ($vertexA->getGraph() !== $this || $vertexB->getGraph() !== $this)
             throw new Exception('Vertex must be in graph !');
-        $edge = new UndirectedEdge($sourceVertex, $destinationVertex, $this, $attributes);
-        $sourceVertex->addEdge($edge);
-        $destinationVertex->addEdge($edge);
+
+        $edge = new UndirectedEdge($vertexA, $vertexB, $this, $attributes);
+        $vertexA->addEdge($edge);
+        $vertexB->addEdge($edge);
         $this->edges[$edge->getId()] = $edge;
+
         return $edge;
     }
 
@@ -169,10 +162,12 @@ class Graph
     {
         if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
             throw new Exception('Vertex must be in graph !');
+
         $edge = new DirectedEdge($sourceVertex, $destinationVertex, $this, $attributes);
         $sourceVertex->addEdge($edge);
         $destinationVertex->addEdge($edge);
         $this->edges[$edge->getId()] = $edge;
+
         return $edge;
     }
 
@@ -184,13 +179,15 @@ class Graph
     {
         if (!$this->hasEdge($id))
             return false;
+
         $vertices = $this->edges[$id]->getVertices();
-        array_map(function (Vertex $vertex) use ($id) {
+        array_walk($vertices, function (Vertex $vertex) use ($id) {
             if ($vertex->hasEdge($id)) {
                 $vertex->removeEdge($id);
             }
-        }, $vertices);
+        });
         unset($this->edges[$id]);
+
         return true;
     }
 }
