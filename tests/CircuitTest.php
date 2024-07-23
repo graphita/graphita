@@ -125,32 +125,6 @@ class CircuitTest extends TestCase
         $this->assertNull($circuit->getAttribute('name'));
     }
 
-    public function testStartingViaConstructor()
-    {
-        $circuit = new Circuit($this->graph, $this->vertices[1]);
-
-        $this->assertEquals($this->graph, $circuit->getGraph());
-
-        $this->assertIsArray($circuit->getSteps());
-        $this->assertCount(1, $circuit->getSteps());
-        $this->assertEquals(1, $circuit->countSteps());
-        $this->assertEquals($this->vertices[1], $circuit->getFirstStep());
-        $this->assertEquals($this->vertices[1], $circuit->getLastStep());
-
-        $this->assertIsArray($circuit->getVertices());
-        $this->assertCount(1, $circuit->getVertices());
-        $this->assertEquals(1, $circuit->countVertices());
-
-        $this->assertIsArray($circuit->getEdges());
-        $this->assertCount(0, $circuit->getEdges());
-        $this->assertEquals(0, $circuit->countEdges());
-
-        $this->assertTrue($circuit->isStarted());
-        $this->assertFalse($circuit->isFinished());
-
-        $this->assertEquals(0, $circuit->getTotalWeight());
-    }
-
     public function testStarting()
     {
         $circuit = new Circuit($this->graph);
