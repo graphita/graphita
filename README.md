@@ -24,7 +24,7 @@ All documentation is available on the [Wiki Pages](https://github.com/graphita/g
 
 The current package requirements are:
 
-- PHP >= 8.0
+- PHP >= 7.4
 
 
 ## License

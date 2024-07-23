@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Tests\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Algorithms\CircuitFindingAlgorithm;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Circuit;
@@ -25,10 +26,12 @@ class CircuitFindingAlgorithmTest extends TestCase
         $this->vertices[3] = $this->graph->createVertex(3);
         $this->vertices[4] = $this->graph->createVertex(4);
 
-        $this->edges['1-2'] = $this->graph->createUndirectedEdge($this->vertices[1], $this->vertices[2]);
+        $this->edges['1-2'] = $this->graph->createDirectedEdge($this->vertices[1], $this->vertices[2]);
+        $this->edges['2-1'] = $this->graph->createDirectedEdge($this->vertices[2], $this->vertices[1]);
         $this->edges['2-3'] = $this->graph->createUndirectedEdge($this->vertices[2], $this->vertices[3]);
         $this->edges['3-4'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[4]);
-        $this->edges['4-1'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
+        $this->edges['4-1'] = $this->graph->createDirectedEdge($this->vertices[4], $this->vertices[1]);
+        $this->edges['1-4'] = $this->graph->createDirectedEdge($this->vertices[1], $this->vertices[4]);
         $this->edges['1-3'] = $this->graph->createUndirectedEdge($this->vertices[1], $this->vertices[3]);
         $this->edges['2-4'] = $this->graph->createUndirectedEdge($this->vertices[2], $this->vertices[4]);
     }
@@ -173,7 +176,7 @@ class CircuitFindingAlgorithmTest extends TestCase
     {
         $algorithm = new CircuitFindingAlgorithm($this->graph);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Source must be set, before calculate !');
 
         $algorithm->calculate();
@@ -184,7 +187,7 @@ class CircuitFindingAlgorithmTest extends TestCase
         $algorithm = new CircuitFindingAlgorithm($this->graph);
         $algorithm->setSource($this->vertices[1]);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Destination must be set, before calculate !');
 
         $algorithm->calculate();
@@ -199,11 +202,19 @@ class CircuitFindingAlgorithmTest extends TestCase
         $algorithm->calculate();
 
         $this->assertIsArray($algorithm->getResults());
-        $this->assertEmpty($algorithm->getResults());
+        $this->assertContainsOnlyInstancesOf(Circuit::class, $algorithm->getResults());
         $this->assertCount(0, $algorithm->getResults());
         $this->assertEquals(0, $algorithm->countResults());
         $this->assertEmpty($algorithm->getShortestResult());
         $this->assertEmpty($algorithm->getLongestResult());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[1], $result->getLastStep());
+            $this->assertEquals(1, $result->countEdges());
+        }
     }
 
     public function testCalculateWithTwoSteps()
@@ -215,11 +226,33 @@ class CircuitFindingAlgorithmTest extends TestCase
         $algorithm->calculate();
 
         $this->assertIsArray($algorithm->getResults());
-        $this->assertEmpty($algorithm->getResults());
-        $this->assertCount(0, $algorithm->getResults());
-        $this->assertEquals(0, $algorithm->countResults());
-        $this->assertEmpty($algorithm->getShortestResult());
-        $this->assertEmpty($algorithm->getLongestResult());
+        $this->assertContainsOnlyInstancesOf(Circuit::class, $algorithm->getResults());
+        $this->assertCount(2, $algorithm->getResults());
+        $this->assertEquals(2, $algorithm->countResults());
+        $this->assertInstanceOf(Circuit::class, $algorithm->getShortestResult());
+        $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
+        $this->assertInstanceOf(Circuit::class, $algorithm->getLongestResult());
+        $this->assertEquals(2, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[1], $result->getLastStep());
+            $this->assertEquals(2, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['1-4'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[4], $results[0]->getSteps()[2]);
+        $this->assertEquals($this->edges['4-1'], $results[0]->getSteps()[3]);
+        $this->assertEquals($this->vertices[1], $results[0]->getLastStep());
+
+        $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
+        $this->assertEquals($this->edges['1-2'], $results[1]->getSteps()[1]);
+        $this->assertEquals($this->vertices[2], $results[1]->getSteps()[2]);
+        $this->assertEquals($this->edges['2-1'], $results[1]->getSteps()[3]);
+        $this->assertEquals($this->vertices[1], $results[1]->getLastStep());
     }
 
     public function testCalculateWithThreeSteps()
@@ -238,6 +271,14 @@ class CircuitFindingAlgorithmTest extends TestCase
         $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Circuit::class, $algorithm->getLongestResult());
         $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[1], $result->getLastStep());
+            $this->assertEquals(3, $result->countEdges());
+        }
     }
 
     public function testCalculateWithFourSteps()
@@ -256,6 +297,14 @@ class CircuitFindingAlgorithmTest extends TestCase
         $this->assertEquals(4, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Circuit::class, $algorithm->getLongestResult());
         $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[1], $result->getLastStep());
+            $this->assertEquals(4, $result->countEdges());
+        }
     }
 
     public function testCalculateWithWithoutSteps()
@@ -267,11 +316,20 @@ class CircuitFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Circuit::class, $algorithm->getResults());
-        $this->assertCount(12, $algorithm->getResults());
-        $this->assertEquals(12, $algorithm->countResults());
+        $this->assertCount(14, $algorithm->getResults());
+        $this->assertEquals(14, $algorithm->countResults());
         $this->assertInstanceOf(Circuit::class, $algorithm->getShortestResult());
-        $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
+        $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Circuit::class, $algorithm->getLongestResult());
         $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[1], $result->getLastStep());
+            $this->assertGreaterThanOrEqual(2, $result->countEdges());
+            $this->assertLessThanOrEqual(4, $result->countEdges());
+        }
     }
 }

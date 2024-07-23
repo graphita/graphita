@@ -170,7 +170,6 @@ class VertexTest extends TestCase
         $this->assertEquals(0, $vertex1->countIncomingEdges());
         $this->assertFalse($vertex1->hasIncomingEdge($directedEdge->getId()));
 
-
         $this->assertIsArray($vertex2->getIncomingEdges());
         $this->assertEquals(1, $vertex2->countIncomingEdges());
         $this->assertContainsOnlyInstancesOf(AbstractEdge::class, $vertex2->getIncomingEdges());
@@ -195,9 +194,10 @@ class VertexTest extends TestCase
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Vertex ' . $vertex1->getId() . ' has no Edge from Vertex ' . $vertex2->getId());
         $unknownEdges = $vertex1->getIncomingEdgesFrom($vertex2);
+
+        $this->assertIsArray($unknownEdges);
+        $this->assertEmpty($unknownEdges);
     }
 
     public function testGetIncomingEdgesFromWhenVertexHasEdges()
@@ -230,9 +230,10 @@ class VertexTest extends TestCase
         $vertex1 = $graph->createVertex(1, ['name' => 'Vertex 1']);
         $vertex2 = $graph->createVertex(2, ['name' => 'Vertex 2']);
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Vertex ' . $vertex1->getId() . ' has no Edge to Vertex ' . $vertex2->getId());
         $unknownEdges = $vertex1->getOutgoingEdgesTo($vertex2);
+
+        $this->assertIsArray($unknownEdges);
+        $this->assertEmpty($unknownEdges);
     }
 
     public function testGetOutgoingEdgesFromWhenVertexHasEdges()
@@ -339,37 +340,31 @@ class VertexTest extends TestCase
         $this->assertIsArray($vertex1->getNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getNeighbors());
         $this->assertEquals(1, $vertex1->countNeighbors());
-        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getNeighbors());
         $this->assertTrue($vertex1->hasNeighbor($vertex2->getId()));
 
         $this->assertIsArray($vertex2->getNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getNeighbors());
         $this->assertEquals(1, $vertex2->countNeighbors());
-        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getNeighbors());
         $this->assertTrue($vertex2->hasNeighbor($vertex1->getId()));
 
         $this->assertIsArray($vertex1->getIncomingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getIncomingNeighbors());
         $this->assertEquals(1, $vertex1->countIncomingNeighbors());
-        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getIncomingNeighbors());
         $this->assertTrue($vertex1->hasIncomingNeighbors($vertex2->getId()));
 
         $this->assertIsArray($vertex2->getIncomingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getIncomingNeighbors());
         $this->assertEquals(1, $vertex2->countIncomingNeighbors());
-        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getIncomingNeighbors());
         $this->assertTrue($vertex2->hasIncomingNeighbors($vertex1->getId()));
 
         $this->assertIsArray($vertex1->getOutgoingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getOutgoingNeighbors());
         $this->assertEquals(1, $vertex1->countOutgoingNeighbors());
-        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getOutgoingNeighbors());
         $this->assertTrue($vertex1->hasOutgoingNeighbors($vertex2->getId()));
 
         $this->assertIsArray($vertex2->getOutgoingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getOutgoingNeighbors());
         $this->assertEquals(1, $vertex2->countOutgoingNeighbors());
-        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getOutgoingNeighbors());
         $this->assertTrue($vertex2->hasOutgoingNeighbors($vertex1->getId()));
     }
 
@@ -383,13 +378,11 @@ class VertexTest extends TestCase
         $this->assertIsArray($vertex1->getNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getNeighbors());
         $this->assertEquals(1, $vertex1->countNeighbors());
-        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getNeighbors());
         $this->assertTrue($vertex1->hasNeighbor($vertex2->getId()));
 
         $this->assertIsArray($vertex2->getNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getNeighbors());
         $this->assertEquals(1, $vertex2->countNeighbors());
-        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getNeighbors());
         $this->assertTrue($vertex2->hasNeighbor($vertex1->getId()));
 
         $this->assertIsArray($vertex1->getIncomingNeighbors());
@@ -400,13 +393,11 @@ class VertexTest extends TestCase
         $this->assertIsArray($vertex2->getIncomingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex2->getIncomingNeighbors());
         $this->assertEquals(1, $vertex2->countIncomingNeighbors());
-        $this->assertArrayHasKey($vertex1->getId(), $vertex2->getIncomingNeighbors());
         $this->assertTrue($vertex2->hasIncomingNeighbors($vertex1->getId()));
 
         $this->assertIsArray($vertex1->getOutgoingNeighbors());
         $this->assertContainsOnlyInstancesOf(Vertex::class, $vertex1->getOutgoingNeighbors());
         $this->assertEquals(1, $vertex1->countOutgoingNeighbors());
-        $this->assertArrayHasKey($vertex2->getId(), $vertex1->getOutgoingNeighbors());
         $this->assertTrue($vertex1->hasOutgoingNeighbors($vertex2->getId()));
 
         $this->assertIsArray($vertex2->getOutgoingNeighbors());

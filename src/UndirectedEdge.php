@@ -2,7 +2,9 @@
 
 namespace Graphita\Graphita;
 
-class UndirectedEdge extends Abstracts\AbstractEdge
+use Graphita\Graphita\Abstracts\AbstractEdge;
+
+class UndirectedEdge extends AbstractEdge
 {
 
 }

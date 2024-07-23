@@ -22,7 +22,7 @@ trait AttributesHandlerTrait
      * @param $default
      * @return mixed|null
      */
-    public function getAttribute($key, $default = null): mixed
+    public function getAttribute($key, $default = null)
     {
         return $this->attributes[$key] ?? $default;
     }
@@ -30,9 +30,9 @@ trait AttributesHandlerTrait
     /**
      * @param $key
      * @param $value
-     * @return AttributesHandlerTrait
+     * @return self
      */
-    public function setAttribute($key, $value): static
+    public function setAttribute($key, $value): self
     {
         $this->attributes[$key] = $value;
         return $this;
@@ -40,9 +40,9 @@ trait AttributesHandlerTrait
 
     /**
      * @param array $attributes
-     * @return AttributesHandlerTrait
+     * @return self
      */
-    public function setAttributes(array $attributes): static
+    public function setAttributes(array $attributes): self
     {
         $this->attributes = $attributes + $this->attributes;
         return $this;
@@ -50,9 +50,9 @@ trait AttributesHandlerTrait
 
     /**
      * @param $key
-     * @return AttributesHandlerTrait
+     * @return self
      */
-    public function removeAttribute($key): static
+    public function removeAttribute($key): self
     {
         unset($this->attributes[$key]);
         return $this;
@@ -61,7 +61,7 @@ trait AttributesHandlerTrait
     /**
      * @return AttributesHandlerTrait
      */
-    public function emptyAttributes(): static
+    public function emptyAttributes(): self
     {
         unset($this->attributes);
         $this->attributes = array();

@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Tests\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Algorithms\TrailFindingAlgorithm;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Trail;
@@ -11,7 +12,9 @@ use PHPUnit\Framework\TestCase;
 class TrailFindingAlgorithmTest extends TestCase
 {
     private Graph $graph;
+
     private array $vertices = [];
+
     private array $edges = [];
 
     public function setUp(): void
@@ -173,7 +176,7 @@ class TrailFindingAlgorithmTest extends TestCase
     {
         $algorithm = new TrailFindingAlgorithm($this->graph);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Source must be set, before calculate !');
 
         $algorithm->calculate();
@@ -184,7 +187,7 @@ class TrailFindingAlgorithmTest extends TestCase
         $algorithm = new TrailFindingAlgorithm($this->graph);
         $algorithm->setSource($this->vertices[1]);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Destination must be set, before calculate !');
 
         $algorithm->calculate();
@@ -206,6 +209,18 @@ class TrailFindingAlgorithmTest extends TestCase
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Trail::class, $algorithm->getLongestResult());
         $this->assertEquals(1, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(1, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['1-3'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
     }
 
     public function testCalculateWithTwoSteps()
@@ -224,6 +239,26 @@ class TrailFindingAlgorithmTest extends TestCase
         $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Trail::class, $algorithm->getLongestResult());
         $this->assertEquals(2, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(2, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['4-1'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[4], $results[0]->getSteps()[2]);
+        $this->assertEquals($this->edges['3-4'], $results[0]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
+
+        $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
+        $this->assertEquals($this->edges['1-2'], $results[1]->getSteps()[1]);
+        $this->assertEquals($this->vertices[2], $results[1]->getSteps()[2]);
+        $this->assertEquals($this->edges['2-3'], $results[1]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[1]->getLastStep());
     }
 
     public function testCalculateWithThreeSteps()
@@ -242,6 +277,14 @@ class TrailFindingAlgorithmTest extends TestCase
         $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Trail::class, $algorithm->getLongestResult());
         $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(3, $result->countEdges());
+        }
     }
 
     public function testCalculateWithFourSteps()
@@ -254,10 +297,20 @@ class TrailFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Trail::class, $algorithm->getResults());
-        $this->assertCount(0, $algorithm->getResults());
-        $this->assertEquals(0, $algorithm->countResults());
-        $this->assertEmpty($algorithm->getShortestResult());
-        $this->assertEmpty($algorithm->getLongestResult());
+        $this->assertCount(4, $algorithm->getResults());
+        $this->assertEquals(4, $algorithm->countResults());
+        $this->assertInstanceOf(Trail::class, $algorithm->getShortestResult());
+        $this->assertEquals(4, $algorithm->getShortestResult()->getTotalWeight());
+        $this->assertInstanceOf(Trail::class, $algorithm->getLongestResult());
+        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(4, $result->countEdges());
+        }
     }
 
     public function testCalculateWithWithoutSteps()
@@ -269,11 +322,20 @@ class TrailFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Trail::class, $algorithm->getResults());
-        $this->assertCount(5, $algorithm->getResults());
-        $this->assertEquals(5, $algorithm->countResults());
+        $this->assertCount(9, $algorithm->getResults());
+        $this->assertEquals(9, $algorithm->countResults());
         $this->assertInstanceOf(Trail::class, $algorithm->getShortestResult());
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Trail::class, $algorithm->getLongestResult());
-        $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertGreaterThanOrEqual(1, $result->countEdges());
+            $this->assertLessThanOrEqual(4, $result->countEdges());
+        }
     }
 }

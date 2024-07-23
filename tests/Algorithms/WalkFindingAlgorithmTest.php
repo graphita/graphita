@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Tests\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Algorithms\WalkFindingAlgorithm;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Walk;
@@ -11,7 +12,9 @@ use PHPUnit\Framework\TestCase;
 class WalkFindingAlgorithmTest extends TestCase
 {
     private Graph $graph;
+
     private array $vertices = [];
+
     private array $edges = [];
 
     public function setUp(): void
@@ -173,7 +176,7 @@ class WalkFindingAlgorithmTest extends TestCase
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Source must be set, before calculate !');
 
         $algorithm->calculate();
@@ -184,7 +187,7 @@ class WalkFindingAlgorithmTest extends TestCase
         $algorithm = new WalkFindingAlgorithm($this->graph);
         $algorithm->setSource($this->vertices[1]);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Destination must be set, before calculate !');
 
         $algorithm->calculate();
@@ -206,6 +209,18 @@ class WalkFindingAlgorithmTest extends TestCase
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
         $this->assertEquals(1, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(1, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['1-3'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
     }
 
     public function testCalculateWithTwoSteps()
@@ -224,6 +239,26 @@ class WalkFindingAlgorithmTest extends TestCase
         $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
         $this->assertEquals(2, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(2, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['4-1'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[4], $results[0]->getSteps()[2]);
+        $this->assertEquals($this->edges['3-4'], $results[0]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
+
+        $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
+        $this->assertEquals($this->edges['1-2'], $results[1]->getSteps()[1]);
+        $this->assertEquals($this->vertices[2], $results[1]->getSteps()[2]);
+        $this->assertEquals($this->edges['2-3'], $results[1]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[1]->getLastStep());
     }
 
     public function testCalculateWithThreeSteps()
@@ -236,12 +271,20 @@ class WalkFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(2, $algorithm->getResults());
-        $this->assertEquals(2, $algorithm->countResults());
+        $this->assertCount(7, $algorithm->getResults());
+        $this->assertEquals(7, $algorithm->countResults());
         $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
         $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
         $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(3, $result->countEdges());
+        }
     }
 
     public function testCalculateWithFourSteps()
@@ -254,12 +297,20 @@ class WalkFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(2, $algorithm->getResults());
-        $this->assertEquals(2, $algorithm->countResults());
+        $this->assertCount(20, $algorithm->getResults());
+        $this->assertEquals(20, $algorithm->countResults());
         $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
         $this->assertEquals(4, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
         $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(4, $result->countEdges());
+        }
     }
 
     public function testCalculateWithWithoutSteps()
@@ -271,11 +322,20 @@ class WalkFindingAlgorithmTest extends TestCase
 
         $this->assertIsArray($algorithm->getResults());
         $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(7, $algorithm->getResults());
-        $this->assertEquals(7, $algorithm->countResults());
+        $this->assertCount(30, $algorithm->getResults());
+        $this->assertEquals(30, $algorithm->countResults());
         $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
         $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertGreaterThanOrEqual(1, $result->countEdges());
+            $this->assertLessThanOrEqual(4, $result->countEdges());
+        }
     }
 }

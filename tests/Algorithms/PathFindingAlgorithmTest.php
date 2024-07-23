@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Tests\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Algorithms\PathFindingAlgorithm;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Path;
@@ -173,7 +174,7 @@ class PathFindingAlgorithmTest extends TestCase
     {
         $algorithm = new PathFindingAlgorithm($this->graph);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Source must be set, before calculate !');
 
         $algorithm->calculate();
@@ -184,7 +185,7 @@ class PathFindingAlgorithmTest extends TestCase
         $algorithm = new PathFindingAlgorithm($this->graph);
         $algorithm->setSource($this->vertices[1]);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Destination must be set, before calculate !');
 
         $algorithm->calculate();
@@ -206,6 +207,18 @@ class PathFindingAlgorithmTest extends TestCase
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Path::class, $algorithm->getLongestResult());
         $this->assertEquals(1, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(1, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['1-3'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
     }
 
     public function testCalculateWithTwoSteps()
@@ -224,6 +237,26 @@ class PathFindingAlgorithmTest extends TestCase
         $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Path::class, $algorithm->getLongestResult());
         $this->assertEquals(2, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(2, $result->countEdges());
+        }
+
+        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals($this->edges['4-1'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[4], $results[0]->getSteps()[2]);
+        $this->assertEquals($this->edges['3-4'], $results[0]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
+
+        $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
+        $this->assertEquals($this->edges['1-2'], $results[1]->getSteps()[1]);
+        $this->assertEquals($this->vertices[2], $results[1]->getSteps()[2]);
+        $this->assertEquals($this->edges['2-3'], $results[1]->getSteps()[3]);
+        $this->assertEquals($this->vertices[3], $results[1]->getLastStep());
     }
 
     public function testCalculateWithThreeSteps()
@@ -242,6 +275,14 @@ class PathFindingAlgorithmTest extends TestCase
         $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Path::class, $algorithm->getLongestResult());
         $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(3, $result->countEdges());
+        }
     }
 
     public function testCalculateWithFourSteps()
@@ -258,6 +299,14 @@ class PathFindingAlgorithmTest extends TestCase
         $this->assertEquals(0, $algorithm->countResults());
         $this->assertEmpty($algorithm->getShortestResult());
         $this->assertEmpty($algorithm->getLongestResult());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertEquals(4, $result->countEdges());
+        }
     }
 
     public function testCalculateWithWithoutSteps()
@@ -275,5 +324,14 @@ class PathFindingAlgorithmTest extends TestCase
         $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
         $this->assertInstanceOf(Path::class, $algorithm->getLongestResult());
         $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            $this->assertEquals($this->vertices[1], $result->getFirstStep());
+            $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertGreaterThanOrEqual(1, $result->countEdges());
+            $this->assertLessThanOrEqual(4, $result->countEdges());
+        }
     }
 }
