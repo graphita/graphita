@@ -48,17 +48,12 @@ class Walk
 
     /**
      * @param Graph $graph
-     * @param Vertex|null $sourceVertex
-     * @throws Exception
+     * @param array $attributes
      */
-    public function __construct(Graph &$graph, ?Vertex $sourceVertex = null, array $attributes = array())
+    public function __construct(Graph &$graph, array $attributes = array())
     {
         $this->graph = $graph;
         $this->setAttributes($attributes);
-
-        if( $sourceVertex ){
-            $this->start($sourceVertex);
-        }
     }
 
     /**
