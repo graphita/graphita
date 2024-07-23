@@ -260,7 +260,7 @@ class WalkFindingAlgorithm
 
                             $newWalks[] = $newWalk;
                         } catch (Throwable $exception) {
-
+                            // Nothing to do, because it's important to add step successfully !
                         }
                     }
                 }
@@ -276,7 +276,7 @@ class WalkFindingAlgorithm
                 try {
                     $walk->finish();
                 } catch (Throwable $exception) {
-
+                    // Nothing to do, because it's important to finish successfully !
                 }
             }
 
