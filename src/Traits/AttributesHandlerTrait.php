@@ -61,7 +61,7 @@ trait AttributesHandlerTrait
     /**
      * @return AttributesHandlerTrait
      */
-    public function emptyAttributes(): static
+    public function emptyAttributes(): self
     {
         unset($this->attributes);
         $this->attributes = array();
