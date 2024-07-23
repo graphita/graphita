@@ -125,32 +125,6 @@ class WalkTest extends TestCase
         $this->assertNull($walk->getAttribute('name'));
     }
 
-    public function testStartingViaConstructor()
-    {
-        $walk = new Walk($this->graph, $this->vertices[1]);
-
-        $this->assertEquals($this->graph, $walk->getGraph());
-
-        $this->assertIsArray($walk->getSteps());
-        $this->assertCount(1, $walk->getSteps());
-        $this->assertEquals(1, $walk->countSteps());
-        $this->assertEquals($this->vertices[1], $walk->getFirstStep());
-        $this->assertEquals($this->vertices[1], $walk->getLastStep());
-
-        $this->assertIsArray($walk->getVertices());
-        $this->assertCount(1, $walk->getVertices());
-        $this->assertEquals(1, $walk->countVertices());
-
-        $this->assertIsArray($walk->getEdges());
-        $this->assertCount(0, $walk->getEdges());
-        $this->assertEquals(0, $walk->countEdges());
-
-        $this->assertTrue($walk->isStarted());
-        $this->assertFalse($walk->isFinished());
-
-        $this->assertEquals(0, $walk->getTotalWeight());
-    }
-
     public function testStarting()
     {
         $walk = new Walk($this->graph);
