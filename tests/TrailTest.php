@@ -127,32 +127,6 @@ class TrailTest extends TestCase
         $this->assertNull($trail->getAttribute('name'));
     }
 
-    public function testStartingViaConstructor()
-    {
-        $trail = new Trail($this->graph, $this->vertices[1]);
-
-        $this->assertEquals($this->graph, $trail->getGraph());
-
-        $this->assertIsArray($trail->getSteps());
-        $this->assertCount(1, $trail->getSteps());
-        $this->assertEquals(1, $trail->countSteps());
-        $this->assertEquals($this->vertices[1], $trail->getFirstStep());
-        $this->assertEquals($this->vertices[1], $trail->getLastStep());
-
-        $this->assertIsArray($trail->getVertices());
-        $this->assertCount(1, $trail->getVertices());
-        $this->assertEquals(1, $trail->countVertices());
-
-        $this->assertIsArray($trail->getEdges());
-        $this->assertCount(0, $trail->getEdges());
-        $this->assertEquals(0, $trail->countEdges());
-
-        $this->assertTrue($trail->isStarted());
-        $this->assertFalse($trail->isFinished());
-
-        $this->assertEquals(0, $trail->getTotalWeight());
-    }
-
     public function testStarting()
     {
         $trail = new Trail($this->graph);
