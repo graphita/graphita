@@ -77,12 +77,12 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @param Vertex $source
+     * @param Vertex|null $source
      * @return WalkFindingAlgorithm
      */
-    public function setSource(Vertex &$source): WalkFindingAlgorithm
+    public function setSource(?Vertex &$source = null): WalkFindingAlgorithm
     {
-        if ($source->getGraph() !== $this->getGraph()) {
+        if ($source !== null && $source->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Source Vertex must be in Graph !');
         }
         $this->source = $source;
@@ -99,12 +99,12 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @param Vertex $destination
+     * @param Vertex|null $destination
      * @return WalkFindingAlgorithm
      */
-    public function setDestination(Vertex &$destination): WalkFindingAlgorithm
+    public function setDestination(?Vertex &$destination = null): WalkFindingAlgorithm
     {
-        if ($destination->getGraph() !== $this->getGraph()) {
+        if ($destination !== null && $destination->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Destination Vertex must be in Graph !');
         }
         $this->destination = $destination;
@@ -121,12 +121,12 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @param int $steps
+     * @param int|null $steps
      * @return WalkFindingAlgorithm
      */
-    public function setSteps(int $steps): WalkFindingAlgorithm
+    public function setSteps(?int $steps = null): WalkFindingAlgorithm
     {
-        if ($steps < 1) {
+        if ($steps !== null && $steps < 1) {
             throw new InvalidArgumentException('Steps must be Positive Integer Number equal or bigger than 1 !');
         }
         $this->steps = $steps;
