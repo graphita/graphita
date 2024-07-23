@@ -227,10 +227,13 @@ class WalkFindingAlgorithm
 
             /** @var Walk[] $walks */
             $walks = [];
-            $walks[] = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
-                &$graph,
-                $this->getSource()
+            /** @var Walk $walk */
+            $walk = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
+                &$graph
             ]);
+            $walk->start($this->getSource());
+
+            $walks[] = $walk;
 
             for ($step = 1; $step <= $this->getSteps(); $step++) {
                 $newWalks = [];
