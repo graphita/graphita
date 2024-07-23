@@ -19,9 +19,9 @@ abstract class AbstractEdge
     private Graph $graph;
 
     /**
-     * @var float|int
+     * @var float
      */
-    private float|int $weight = 1;
+    private float $weight = 1;
 
     /**
      * @var array
@@ -43,18 +43,6 @@ abstract class AbstractEdge
         $this->vertices[$b->getId()] = $b;
         $this->graph = $graph;
         $this->setAttributes($attributes);
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return 'Edge Id:' . $this->getId() . PHP_EOL .
-            'Information:' . json_encode($this->getAttributes()) . PHP_EOL .
-            'Vertices:' . implode(',', array_map(function ($vertex) {
-                return $vertex->getId() . ':' . json_encode($vertex->getAttributes());
-            }, $this->getVertices())) . PHP_EOL;
     }
 
     /**
@@ -102,7 +90,7 @@ abstract class AbstractEdge
      * @param float|int $weight
      * @return AbstractEdge
      */
-    public function setWeight(float|int $weight): static
+    public function setWeight(float $weight): AbstractEdge
     {
         $this->weight = $weight;
         return $this;
