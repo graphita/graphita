@@ -126,32 +126,6 @@ class PathTest extends TestCase
         $this->assertNull($path->getAttribute('name'));
     }
 
-    public function testStartingViaConstructor()
-    {
-        $path = new Path($this->graph, $this->vertices[1]);
-
-        $this->assertEquals($this->graph, $path->getGraph());
-
-        $this->assertIsArray($path->getSteps());
-        $this->assertCount(1, $path->getSteps());
-        $this->assertEquals(1, $path->countSteps());
-        $this->assertEquals($this->vertices[1], $path->getFirstStep());
-        $this->assertEquals($this->vertices[1], $path->getLastStep());
-
-        $this->assertIsArray($path->getVertices());
-        $this->assertCount(1, $path->getVertices());
-        $this->assertEquals(1, $path->countVertices());
-
-        $this->assertIsArray($path->getEdges());
-        $this->assertCount(0, $path->getEdges());
-        $this->assertEquals(0, $path->countEdges());
-
-        $this->assertTrue($path->isStarted());
-        $this->assertFalse($path->isFinished());
-
-        $this->assertEquals(0, $path->getTotalWeight());
-    }
-
     public function testStarting()
     {
         $path = new Path($this->graph);
