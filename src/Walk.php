@@ -3,11 +3,7 @@
 namespace Graphita\Graphita;
 
 use Graphita\Graphita\Abstracts\AbstractEdge;
-use Graphita\Graphita\DirectedEdge;
-use Graphita\Graphita\Graph;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
-use Graphita\Graphita\UndirectedEdge;
-use Graphita\Graphita\Vertex;
 use Exception;
 use InvalidArgumentException;
 
@@ -321,10 +317,7 @@ class Walk
         $this->steps[] = $throughEdge;
         $this->steps[] = $nextVertex;
 
-        $this->totalWeight = array_reduce($this->getEdges(), function ($totalWeight, AbstractEdge $edge) {
-            $totalWeight += $edge->getWeight();
-            return $totalWeight;
-        }, 0);
+        $this->calculateTotalWeight();
 
         if(
             $this->isLoop() &&
@@ -332,5 +325,17 @@ class Walk
         ){
             $this->finish();
         }
+    }
+
+    /**
+     * @return void
+     */
+    public function calculateTotalWeight(): void
+    {
+        $this->totalWeight = array_reduce($this->getEdges(), function ($totalWeight, AbstractEdge $edge) {
+            $totalWeight += $edge->getWeight();
+
+            return $totalWeight;
+        }, 0);
     }
 }
