@@ -342,4 +342,16 @@ class WalkFindingAlgorithm
 
         return null;
     }
+
+    public function calculateTotalWeight(): WalkFindingAlgorithm
+    {
+        $results = $this->getResults();
+        array_walk($results, function (Walk $walk) {
+            $walk->calculateTotalWeight();
+        });
+
+        $this->sortResults();
+
+        return $this;
+    }
 }
