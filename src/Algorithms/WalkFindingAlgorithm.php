@@ -312,6 +312,18 @@ class WalkFindingAlgorithm
     {
         usort($this->results, function (Walk $walk1, Walk $walk2) {
             if ($walk1->getTotalWeight() == $walk2->getTotalWeight()) {
+                if ($walk1->countEdges() == $walk2->countEdges()) {
+                    $vertices1 = array_map(function (Vertex $vertex) {
+                        return $vertex->getId();
+                    }, $walk1->getVertices());
+
+                    $vertices2 = array_map(function (Vertex $vertex) {
+                        return $vertex->getId();
+                    }, $walk2->getVertices());
+
+                    return strcmp(implode('-', $vertices1), implode('-', $vertices2));
+                }
+
                 return $walk1->countEdges() >= $walk2->countEdges() ? 1 : -1;
             }
 
@@ -341,5 +353,20 @@ class WalkFindingAlgorithm
         }
 
         return null;
+    }
+
+    /**
+     * @return $this
+     */
+    public function calculateTotalWeight(): WalkFindingAlgorithm
+    {
+        $results = $this->getResults();
+        array_walk($results, function (Walk $walk) {
+            $walk->calculateTotalWeight();
+        });
+
+        $this->sortResults();
+
+        return $this;
     }
 }

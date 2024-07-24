@@ -247,15 +247,15 @@ class PathFindingAlgorithmTest extends TestCase
         }
 
         $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
-        $this->assertEquals($this->edges['4-1'], $results[0]->getSteps()[1]);
-        $this->assertEquals($this->vertices[4], $results[0]->getSteps()[2]);
-        $this->assertEquals($this->edges['3-4'], $results[0]->getSteps()[3]);
+        $this->assertEquals($this->edges['1-2'], $results[0]->getSteps()[1]);
+        $this->assertEquals($this->vertices[2], $results[0]->getSteps()[2]);
+        $this->assertEquals($this->edges['2-3'], $results[0]->getSteps()[3]);
         $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
 
         $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
-        $this->assertEquals($this->edges['1-2'], $results[1]->getSteps()[1]);
-        $this->assertEquals($this->vertices[2], $results[1]->getSteps()[2]);
-        $this->assertEquals($this->edges['2-3'], $results[1]->getSteps()[3]);
+        $this->assertEquals($this->edges['4-1'], $results[1]->getSteps()[1]);
+        $this->assertEquals($this->vertices[4], $results[1]->getSteps()[2]);
+        $this->assertEquals($this->edges['3-4'], $results[1]->getSteps()[3]);
         $this->assertEquals($this->vertices[3], $results[1]->getLastStep());
     }
 
