@@ -343,6 +343,9 @@ class WalkFindingAlgorithm
         return null;
     }
 
+    /**
+     * @return $this
+     */
     public function calculateTotalWeight(): WalkFindingAlgorithm
     {
         $results = $this->getResults();
