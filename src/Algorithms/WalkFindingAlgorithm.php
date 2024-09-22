@@ -296,13 +296,15 @@ class WalkFindingAlgorithm
      * @param Walk[] $walks
      * @return void
      */
-    private function addResults(array $walks): void
+    private function addResults(array $walks, bool $sort = false): void
     {
         foreach ($walks as $walk) {
             $this->results[] = $walk;
         }
 
-        $this->sortResults();
+        if ($sort) {
+            $this->sortResults();
+        }
     }
 
     /**
@@ -358,14 +360,16 @@ class WalkFindingAlgorithm
     /**
      * @return $this
      */
-    public function calculateTotalWeight(): WalkFindingAlgorithm
+    public function calculateTotalWeight(bool $sort = false): WalkFindingAlgorithm
     {
         $results = $this->getResults();
         array_walk($results, function (Walk $walk) {
             $walk->calculateTotalWeight();
         });
 
-        $this->sortResults();
+        if ($sort) {
+            $this->sortResults();
+        }
 
         return $this;
     }
