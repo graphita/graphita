@@ -59,7 +59,7 @@ trait AttributesHandlerTrait
     }
 
     /**
-     * @return AttributesHandlerTrait
+     * @return self
      */
     public function emptyAttributes(): self
     {
