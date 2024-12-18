@@ -19,14 +19,14 @@ class WalkFindingAlgorithm
     private Graph $graph;
 
     /**
-     * @var ?Vertex
+     * @var array
      */
-    private ?Vertex $source = null;
+    private array $sources = [];
 
     /**
-     * @var ?Vertex
+     * @var array
      */
-    private ?Vertex $destination = null;
+    private array $destinations = [];
 
     /**
      * @var ?int
@@ -69,45 +69,95 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @return Vertex|null
+     * @return array
      */
-    public function getSource(): ?Vertex
+    public function getSources(): array
     {
-        return $this->source;
+        return $this->sources;
     }
 
     /**
      * @param Vertex|null $source
      * @return WalkFindingAlgorithm
      */
-    public function setSource(?Vertex &$source = null): WalkFindingAlgorithm
+    public function addSource(Vertex &$source): WalkFindingAlgorithm
     {
-        if ($source !== null && $source->getGraph() !== $this->getGraph()) {
+        if ($source->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Source Vertex must be in Graph !');
         }
-        $this->source = $source;
+        $this->sources[] = $source;
 
         return $this;
     }
 
     /**
-     * @return Vertex|null
+     * @param array $sources
+     * @return WalkFindingAlgorithm
      */
-    public function getDestination(): ?Vertex
+    public function setSources(array $sources): WalkFindingAlgorithm
     {
-        return $this->destination;
+        $this->sources = [];
+        foreach ($sources as $source) {
+            $this->addSource($source);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param Vertex|null $source
+     * @return WalkFindingAlgorithm
+     */
+    public function setSource(Vertex &$source): WalkFindingAlgorithm
+    {
+        $this->setSources([$source]);
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDestinations(): array
+    {
+        return $this->destinations;
     }
 
     /**
      * @param Vertex|null $destination
      * @return WalkFindingAlgorithm
      */
-    public function setDestination(?Vertex &$destination = null): WalkFindingAlgorithm
+    public function addDestination(Vertex &$destination): WalkFindingAlgorithm
     {
-        if ($destination !== null && $destination->getGraph() !== $this->getGraph()) {
+        if ($destination->getGraph() !== $this->getGraph()) {
             throw new InvalidArgumentException('Destination Vertex must be in Graph !');
         }
-        $this->destination = $destination;
+        $this->destinations[] = $destination;
+
+        return $this;
+    }
+
+    /**
+     * @param array $destinations
+     * @return WalkFindingAlgorithm
+     */
+    public function setDestinations(array $destinations): WalkFindingAlgorithm
+    {
+        $this->destinations = [];
+        foreach ($destinations as $destination) {
+            $this->addDestination($destination);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param Vertex $destination
+     * @return WalkFindingAlgorithm
+     */
+    public function setDestination(Vertex &$destination): WalkFindingAlgorithm
+    {
+        $this->setDestinations([$destination]);
 
         return $this;
     }
@@ -204,18 +254,23 @@ class WalkFindingAlgorithm
      */
     public function calculate(): WalkFindingAlgorithm
     {
-        if (! $this->getSource()) {
+        if (empty($this->getSources())) {
             throw new Exception('Source must be set, before calculate !');
         }
-        if (! $this->getDestination()) {
+
+        if (empty($this->getDestinations())) {
             throw new Exception('Destination must be set, before calculate !');
+        }
+
+        if (count($this->getSources()) != count($this->getDestinations())) {
+            throw new Exception('Sources count is not Equal destinations count !');
         }
 
         if ($this->getSteps() === null) {
             for ($step = $this->getMinSteps(); $step <= $this->getMaxSteps(); $step++) {
                 $walks = (new static($this->graph))
-                    ->setSource($this->source)
-                    ->setDestination($this->destination)
+                    ->setSources($this->getSources())
+                    ->setDestinations($this->getDestinations())
                     ->setSteps($step)
                     ->calculate()
                     ->getResults();
@@ -227,13 +282,26 @@ class WalkFindingAlgorithm
 
             /** @var Walk[] $walks */
             $walks = [];
-            /** @var Walk $walk */
-            $walk = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
-                &$graph
-            ]);
-            $walk->start($this->getSource());
 
-            $walks[] = $walk;
+            $startedSources = [];
+            for ($index = 0; $index < count($this->getSources()); $index++) {
+                /** @var Vertex $source */
+                $source = $this->getSources()[$index];
+
+                if( in_array($source->getId(), $startedSources) ){
+                    continue;
+                }
+
+                /** @var Walk $walk */
+                $walk = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
+                    &$graph
+                ]);
+                $walk->start($source);
+
+                $walks[] = $walk;
+
+                $startedSources[] = $source->getId();
+            }
 
             for ($step = 1; $step <= $this->getSteps(); $step++) {
                 $newWalks = [];
@@ -280,11 +348,32 @@ class WalkFindingAlgorithm
                 }
             }
 
-            $walks = array_filter($walks, function (Walk $walk) {
-                return $walk->isFinished() &&
-                    $walk->countEdges() == $this->getSteps() &&
-                    $walk->getFirstStep()->getId() == $this->getSource()->getId() &&
-                    $walk->getLastStep()->getId() == $this->getDestination()->getId();
+            $sources = array_map(function (Vertex $vertex) {
+                return $vertex->getId();
+            }, $this->getSources());
+            $destinations = array_map(function (Vertex $vertex) {
+                return $vertex->getId();
+            }, $this->getDestinations());
+
+            $walks = array_filter($walks, function (Walk $walk) use ($destinations, $sources) {
+                if (
+                    ! $walk->isFinished() ||
+                    $walk->countEdges() != $this->getSteps()
+                ) {
+                    return false;
+                }
+
+                if(
+                    ! in_array($walk->getFirstStep()->getId(), $sources) ||
+                    ! in_array($walk->getLastStep()->getId(), $destinations)
+                ) {
+                    return false;
+                }
+
+                $sourceIndex = array_search($walk->getFirstStep()->getId(), $sources);
+                $destinationIndex = array_search($walk->getLastStep()->getId(), $destinations);
+
+                return $sourceIndex == $destinationIndex;
             });
 
             $this->addResults($walks);
@@ -294,6 +383,7 @@ class WalkFindingAlgorithm
 
     /**
      * @param Walk[] $walks
+     * @param bool $sort
      * @return void
      */
     private function addResults(array $walks, bool $sort = false): void
