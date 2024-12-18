@@ -8,6 +8,7 @@ use Graphita\Graphita\Graph;
 use Graphita\Graphita\Walk;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use function PHPUnit\Framework\assertContains;
 
 class WalkFindingAlgorithmTest extends TestCase
 {
@@ -41,8 +42,10 @@ class WalkFindingAlgorithmTest extends TestCase
         $algorithm = new WalkFindingAlgorithm($this->graph);
 
         $this->assertEquals($this->graph, $algorithm->getGraph());
-        $this->assertEmpty($algorithm->getSource());
-        $this->assertEmpty($algorithm->getDestination());
+        $this->assertIsArray($algorithm->getSources());
+        $this->assertIsArray($algorithm->getDestinations());
+        $this->assertEmpty($algorithm->getSources());
+        $this->assertEmpty($algorithm->getDestinations());
         $this->assertEmpty($algorithm->getSteps());
         $this->assertEquals(1, $algorithm->getMinSteps());
         $this->assertEquals($this->graph->countVertices(), $algorithm->getMaxSteps());
@@ -54,7 +57,7 @@ class WalkFindingAlgorithmTest extends TestCase
         $this->assertEmpty($algorithm->getLongestResult());
     }
 
-    public function testSetSourceOutsideGraph()
+    public function testAddSourceOutsideGraph()
     {
         $anotherGraph = new Graph();
         $anotherVertex = $anotherGraph->createVertex(1);
@@ -64,18 +67,45 @@ class WalkFindingAlgorithmTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Source Vertex must be in Graph !');
 
-        $algorithm->setSource($anotherVertex);
+        $algorithm->addSource($anotherVertex);
     }
 
-    public function testGetAndSetSource()
+    public function testGetAndAddSource()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
+        $algorithm->addSource($this->vertices[1]);
 
-        $this->assertEquals($this->vertices[1], $algorithm->getSource());
+        $this->assertIsArray($algorithm->getSources());
+        $this->assertCount(1, $algorithm->getSources());
+        $this->assertEquals($this->vertices[1], $algorithm->getSources()[0]);
     }
 
-    public function testSetDestinationOutsideGraph()
+    public function testSetSourcesOutsideGraph()
+    {
+        $anotherGraph = new Graph();
+        $anotherVertex1 = $anotherGraph->createVertex(1);
+        $anotherVertex2 = $anotherGraph->createVertex(2);
+
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Source Vertex must be in Graph !');
+
+        $algorithm->setSources([$anotherVertex1, $anotherVertex2]);
+    }
+
+    public function testGetAndSetSources()
+    {
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+        $algorithm->setSources([$this->vertices[1], $this->vertices[2]]);
+
+        $this->assertIsArray($algorithm->getSources());
+        $this->assertCount(2, $algorithm->getSources());
+        $this->assertEquals($this->vertices[1], $algorithm->getSources()[0]);
+        $this->assertEquals($this->vertices[2], $algorithm->getSources()[1]);
+    }
+
+    public function testAddDestinationOutsideGraph()
     {
         $anotherGraph = new Graph();
         $anotherVertex = $anotherGraph->createVertex(1);
@@ -85,15 +115,42 @@ class WalkFindingAlgorithmTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Destination Vertex must be in Graph !');
 
-        $algorithm->setDestination($anotherVertex);
+        $algorithm->addDestination($anotherVertex);
     }
 
-    public function testGetAndSetDestination()
+    public function testGetAndAddDestination()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setDestination($this->vertices[4]);
+        $algorithm->addDestination($this->vertices[4]);
 
-        $this->assertEquals($this->vertices[4], $algorithm->getDestination());
+        $this->assertIsArray($algorithm->getDestinations());
+        $this->assertCount(1, $algorithm->getDestinations());
+        $this->assertEquals($this->vertices[4], $algorithm->getDestinations()[0]);
+    }
+
+    public function testSetDestinationsOutsideGraph()
+    {
+        $anotherGraph = new Graph();
+        $anotherVertex1 = $anotherGraph->createVertex(1);
+        $anotherVertex2 = $anotherGraph->createVertex(2);
+
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Destination Vertex must be in Graph !');
+
+        $algorithm->setDestinations([$anotherVertex1, $anotherVertex2]);
+    }
+
+    public function testGetAndSetDestinations()
+    {
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+        $algorithm->setDestinations([$this->vertices[1], $this->vertices[2]]);
+
+        $this->assertIsArray($algorithm->getDestinations());
+        $this->assertCount(2, $algorithm->getDestinations());
+        $this->assertEquals($this->vertices[1], $algorithm->getDestinations()[0]);
+        $this->assertEquals($this->vertices[2], $algorithm->getDestinations()[1]);
     }
 
     public function testSetStepsLessThanOne()
@@ -185,7 +242,7 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithoutDestination()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
+        $algorithm->addSource($this->vertices[1]);
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Destination must be set, before calculate !');
@@ -193,11 +250,24 @@ class WalkFindingAlgorithmTest extends TestCase
         $algorithm->calculate();
     }
 
+    public function testCalculateWithNotEqualSourcesAndDestinations()
+    {
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addSource($this->vertices[2]);
+        $algorithm->addDestination($this->vertices[3]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Sources count is not Equal destinations count !');
+
+        $algorithm->calculate();
+    }
+
     public function testCalculateWithOneStep()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
-        $algorithm->setDestination($this->vertices[3]);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addDestination($this->vertices[3]);
         $algorithm->setSteps(1);
         $algorithm->calculate();
 
@@ -226,8 +296,8 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithTwoSteps()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
-        $algorithm->setDestination($this->vertices[3]);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addDestination($this->vertices[3]);
         $algorithm->setSteps(2);
         $algorithm->calculate();
 
@@ -264,8 +334,8 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithThreeSteps()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
-        $algorithm->setDestination($this->vertices[3]);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addDestination($this->vertices[3]);
         $algorithm->setSteps(3);
         $algorithm->calculate();
 
@@ -290,8 +360,8 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithFourSteps()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
-        $algorithm->setDestination($this->vertices[3]);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addDestination($this->vertices[3]);
         $algorithm->setSteps(4);
         $algorithm->calculate();
 
@@ -316,8 +386,8 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithWithoutSteps()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSource($this->vertices[1]);
-        $algorithm->setDestination($this->vertices[3]);
+        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addDestination($this->vertices[3]);
         $algorithm->calculate();
 
         $this->assertIsArray($algorithm->getResults());
@@ -334,6 +404,32 @@ class WalkFindingAlgorithmTest extends TestCase
         foreach ($results as $result) {
             $this->assertEquals($this->vertices[1], $result->getFirstStep());
             $this->assertEquals($this->vertices[3], $result->getLastStep());
+            $this->assertGreaterThanOrEqual(1, $result->countEdges());
+            $this->assertLessThanOrEqual(4, $result->countEdges());
+        }
+    }
+
+    public function testCalculateMultipleSourcesAndDestinations()
+    {
+        $algorithm = new WalkFindingAlgorithm($this->graph);
+        $algorithm->setSources([$this->vertices[1], $this->vertices[2]]);
+        $algorithm->setDestinations([$this->vertices[3], $this->vertices[4]]);
+        $algorithm->calculate();
+
+        $this->assertIsArray($algorithm->getResults());
+        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
+        $this->assertCount(60, $algorithm->getResults());
+        $this->assertEquals(60, $algorithm->countResults());
+        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
+        $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
+        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
+        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
+
+        $results = $algorithm->getResults();
+
+        foreach ($results as $result) {
+            assertContains($result->getFirstStep(), [$this->vertices[1], $this->vertices[2]]);
+            assertContains($result->getLastStep(), [$this->vertices[3], $this->vertices[4]]);
             $this->assertGreaterThanOrEqual(1, $result->countEdges());
             $this->assertLessThanOrEqual(4, $result->countEdges());
         }
