@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Walks\Walk;
 use LogicException;
@@ -231,7 +232,7 @@ class WalkFindingAlgorithm
 
     /**
      * @return self
-     * @throws LogicException
+     * @throws LogicException|Exception
      */
     public function calculate(): self
     {
@@ -307,6 +308,7 @@ class WalkFindingAlgorithm
      * @param int $depth
      * @param array $rules
      * @return void
+     * @throws Exception
      */
     private function dfs(
         string $currentVertex,
@@ -395,6 +397,7 @@ class WalkFindingAlgorithm
      * @param array<string> $pathVertices
      * @param array<string> $pathEdges
      * @return void
+     * @throws Exception
      */
     private function buildAndStoreWalk(array $pathVertices, array $pathEdges): void
     {
