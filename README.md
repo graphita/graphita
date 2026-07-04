@@ -5,7 +5,7 @@
 [![GitHub Checks Status](https://img.shields.io/github/actions/workflow/status/graphita/graphita/php.yml?logo=github-actions&logoColor=white&style=flat-square)](https://github.com/graphita/graphita/actions)
 [![Quality Score](https://img.shields.io/scrutinizer/quality/g/graphita/graphita.svg?logo=scrutinizer&style=flat-square)](https://scrutinizer-ci.com/g/graphita/graphita)
 
-PHP Mathematics Library for easier calculation of Graph !
+High-performance PHP Graph Theory and Pathfinding Engine.
 
 ## Installation
 You can install the package via composer:

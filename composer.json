@@ -1,6 +1,6 @@
 {
     "name": "graphita/graphita",
-    "description": "Mathematical Graph / Network Library in PHP",
+    "description": "High-performance PHP Graph Theory and Pathfinding Engine",
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -23,6 +23,6 @@
         "php": ">=7.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.6"
     }
 }

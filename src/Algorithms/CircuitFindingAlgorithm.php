@@ -2,7 +2,7 @@
 
 namespace Graphita\Graphita\Algorithms;
 
-use Graphita\Graphita\Circuit;
+use Graphita\Graphita\Walks\Circuit;
 
 class CircuitFindingAlgorithm extends WalkFindingAlgorithm
 {

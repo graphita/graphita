@@ -2,35 +2,33 @@
 
 namespace Graphita\Graphita;
 
-use Exception;
+use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
+use LogicException;
+use OutOfBoundsException;
 
 class Graph
 {
-    /**
-     * @var array
-     */
-    private array $vertices = array();
-
-
-    /**
-     * @var array
-     */
-    private array $edges = array();
-
+    private array $vertices = [];
+    private array $edges = [];
+    private int $edgeIdCounter = 0;
 
     use AttributesHandlerTrait;
 
     /**
+     * Construct a new Graph.
+     *
      * @param array $attributes
      */
-    public function __construct(array $attributes = array())
+    public function __construct(array $attributes = [])
     {
         $this->setAttributes($attributes);
     }
 
     /**
-     * @return array
+     * Get all vertices in the graph.
+     *
+     * @return array<Vertex>
      */
     public function getVertices(): array
     {
@@ -38,24 +36,72 @@ class Graph
     }
 
     /**
-     * @param $id
-     * @return Vertex|null
+     * Get a specific vertex by its ID.
+     *
+     * @param string $id
+     * @return Vertex
+     * @throws OutOfBoundsException
      */
-    public function getVertex($id): ?Vertex
+    public function getVertex(string $id): Vertex
     {
-        return $this->vertices[$id] ?? null;
+        if (!$this->hasVertex($id)) {
+            throw new OutOfBoundsException("Vertex [{$id}] does not exist in the graph.");
+        }
+
+        return $this->vertices[$id];
     }
 
     /**
-     * @param $id
+     * Check if a vertex exists in the graph.
+     *
+     * @param string $id
      * @return bool
      */
-    public function hasVertex($id): bool
+    public function hasVertex(string $id): bool
     {
-        return array_key_exists($id, $this->vertices);
+        return isset($this->vertices[$id]);
     }
 
     /**
+     * Get all edges in the graph.
+     *
+     * @return array<AbstractEdge>
+     */
+    public function getEdges(): array
+    {
+        return $this->edges;
+    }
+
+    /**
+     * Get a specific edge by its ID.
+     *
+     * @param string $id
+     * @return AbstractEdge
+     * @throws OutOfBoundsException
+     */
+    public function getEdge(string $id): AbstractEdge
+    {
+        if (!$this->hasEdge($id)) {
+            throw new OutOfBoundsException("Edge [{$id}] does not exist in the graph.");
+        }
+
+        return $this->edges[$id];
+    }
+
+    /**
+     * Check if an edge exists in the graph.
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function hasEdge(string $id): bool
+    {
+        return isset($this->edges[$id]);
+    }
+
+    /**
+     * Count the total number of vertices.
+     *
      * @return int
      */
     public function countVertices(): int
@@ -64,58 +110,8 @@ class Graph
     }
 
     /**
-     * @param $id
-     * @param array $attributes
-     * @return Vertex
-     * @throws Exception
-     */
-    public function createVertex($id, array $attributes = array()): Vertex
-    {
-        if ($this->hasVertex($id))
-            throw new Exception('Vertex exist !');
-
-        $vertex = new Vertex($id, $this, $attributes);
-        $this->vertices[$vertex->getId()] = $vertex;
-
-        return $vertex;
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function removeVertex($id): bool
-    {
-        if (!$this->hasVertex($id))
-            return false;
-
-        $edges = $this->vertices[$id]->getEdges();
-        array_walk($edges, function ($edge) {
-            $this->removeEdge($edge->getId());
-        });
-
-        unset($this->vertices[$id]);
-        return true;
-    }
-
-    /**
-     * @return array
-     */
-    public function getEdges(): array
-    {
-        return $this->edges;
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasEdge($id): bool
-    {
-        return array_key_exists($id, $this->edges);
-    }
-
-    /**
+     * Count the total number of edges.
+     *
      * @return int
      */
     public function countEdges(): int
@@ -124,70 +120,346 @@ class Graph
     }
 
     /**
-     * @param Vertex $vertexA
-     * @param Vertex $vertexB
+     * Create and add a new vertex to the graph.
+     *
+     * @param string $id
      * @param array $attributes
-     * @return UndirectedEdge
-     * @throws Exception
+     * @return Vertex
+     * @throws LogicException
      */
-    public function createUndirectedEdge(
-        Vertex $vertexA,
-        Vertex $vertexB,
-        array  $attributes = array()
-    ): UndirectedEdge
+    public function createVertex(string $id, array $attributes = []): Vertex
     {
-        if ($vertexA->getGraph() !== $this || $vertexB->getGraph() !== $this)
-            throw new Exception('Vertex must be in graph !');
+        if ($this->hasVertex($id)) {
+            throw new LogicException("Vertex [{$id}] already exists!");
+        }
 
-        $edge = new UndirectedEdge($vertexA, $vertexB, $this, $attributes);
-        $vertexA->addEdge($edge);
-        $vertexB->addEdge($edge);
-        $this->edges[$edge->getId()] = $edge;
+        $vertex = new Vertex($id, $attributes);
+        $this->vertices[$id] = $vertex;
 
-        return $edge;
+        return $vertex;
     }
 
     /**
-     * @param Vertex $sourceVertex
-     * @param Vertex $destinationVertex
+     * Create a directed edge between two vertices.
+     *
+     * @param string $sourceId
+     * @param string $destinationId
      * @param array $attributes
      * @return DirectedEdge
-     * @throws Exception
+     * @throws OutOfBoundsException
      */
-    public function createDirectedEdge(
-        Vertex $sourceVertex,
-        Vertex $destinationVertex,
-        array  $attributes = array()
-    ): DirectedEdge
+    public function createDirectedEdge(string $sourceId, string $destinationId, array $attributes = []): DirectedEdge
     {
-        if ($sourceVertex->getGraph() !== $this || $destinationVertex->getGraph() !== $this)
-            throw new Exception('Vertex must be in graph !');
+        if (!$this->hasVertex($sourceId) || !$this->hasVertex($destinationId)) {
+            throw new OutOfBoundsException('Source and Destination Vertices must exist in the graph.');
+        }
 
-        $edge = new DirectedEdge($sourceVertex, $destinationVertex, $this, $attributes);
-        $sourceVertex->addEdge($edge);
-        $destinationVertex->addEdge($edge);
-        $this->edges[$edge->getId()] = $edge;
+        $edgeId = 'e_' . (++$this->edgeIdCounter);
+        $edge = new DirectedEdge($edgeId, $sourceId, $destinationId, $attributes);
+
+        $this->edges[$edgeId] = $edge;
+        $this->vertices[$sourceId]->addOutgoingEdgeId($edgeId);
+        $this->vertices[$destinationId]->addIncomingEdgeId($edgeId);
 
         return $edge;
     }
 
     /**
-     * @param $id
+     * Create an undirected edge between two vertices.
+     *
+     * @param string $nodeAId
+     * @param string $nodeBId
+     * @param array $attributes
+     * @return UndirectedEdge
+     * @throws OutOfBoundsException
+     */
+    public function createUndirectedEdge(string $nodeAId, string $nodeBId, array $attributes = []): UndirectedEdge
+    {
+        if (!$this->hasVertex($nodeAId) || !$this->hasVertex($nodeBId)) {
+            throw new OutOfBoundsException('Both Vertices must exist in the graph.');
+        }
+
+        $edgeId = 'e_' . (++$this->edgeIdCounter);
+        $edge = new UndirectedEdge($edgeId, $nodeAId, $nodeBId, $attributes);
+
+        $this->edges[$edgeId] = $edge;
+        $this->vertices[$nodeAId]->addUndirectedEdgeId($edgeId);
+        $this->vertices[$nodeBId]->addUndirectedEdgeId($edgeId);
+
+        return $edge;
+    }
+
+    /**
+     * Remove an edge from the graph.
+     *
+     * @param string $id
      * @return bool
      */
-    public function removeEdge($id): bool
+    public function removeEdge(string $id): bool
     {
-        if (!$this->hasEdge($id))
+        if (!$this->hasEdge($id)) {
             return false;
+        }
 
-        $vertices = $this->edges[$id]->getVertices();
-        array_walk($vertices, function (Vertex $vertex) use ($id) {
-            if ($vertex->hasEdge($id)) {
-                $vertex->removeEdge($id);
+        $edge = $this->edges[$id];
+
+        foreach ($edge->getEndpointIds() as $vertexId) {
+            if (isset($this->vertices[$vertexId])) {
+                $this->vertices[$vertexId]->removeEdgeId($id);
             }
-        });
-        unset($this->edges[$id]);
+        }
 
+        unset($this->edges[$id]);
         return true;
+    }
+
+    /**
+     * Remove a vertex and all its associated edges from the graph.
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function removeVertex(string $id): bool
+    {
+        if (!$this->hasVertex($id)) {
+            return false;
+        }
+
+        $vertex = $this->vertices[$id];
+
+        foreach ($vertex->getAllEdgeIds() as $edgeId) {
+            $this->removeEdge($edgeId);
+        }
+
+        unset($this->vertices[$id]);
+        return true;
+    }
+
+    /**
+     * Get all incoming edges from a specific source vertex.
+     *
+     * @param string $vertexId
+     * @param string $sourceVertexId
+     * @return array<AbstractEdge>
+     * @throws OutOfBoundsException
+     */
+    public function getIncomingEdgesFrom(string $vertexId, string $sourceVertexId): array
+    {
+        $vertex = $this->getVertex($vertexId);
+        $this->getVertex($sourceVertexId);
+        $edges = [];
+
+        foreach ($vertex->getIncomingEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof DirectedEdge && $edge->getSourceId() === $sourceVertexId) {
+                $edges[$edgeId] = $edge;
+            }
+        }
+
+        foreach ($vertex->getUndirectedEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof UndirectedEdge && $edge->hasVertexId($sourceVertexId)) {
+                $edges[$edgeId] = $edge;
+            }
+        }
+
+        return $edges;
+    }
+
+    /**
+     * Get all outgoing edges to a specific destination vertex.
+     *
+     * @param string $vertexId
+     * @param string $destinationVertexId
+     * @return array<AbstractEdge>
+     * @throws OutOfBoundsException
+     */
+    public function getOutgoingEdgesTo(string $vertexId, string $destinationVertexId): array
+    {
+        $vertex = $this->getVertex($vertexId);
+        $this->getVertex($destinationVertexId);
+        $edges = [];
+
+        foreach ($vertex->getOutgoingEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof DirectedEdge && $edge->getDestinationId() === $destinationVertexId) {
+                $edges[$edgeId] = $edge;
+            }
+        }
+
+        foreach ($vertex->getUndirectedEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof UndirectedEdge && $edge->hasVertexId($destinationVertexId)) {
+                $edges[$edgeId] = $edge;
+            }
+        }
+
+        return $edges;
+    }
+
+    /**
+     * Get all neighboring vertices for a specific vertex ID.
+     *
+     * @param string $vertexId
+     * @return array<Vertex>
+     * @throws OutOfBoundsException
+     */
+    public function getNeighbors(string $vertexId): array
+    {
+        $vertex = $this->getVertex($vertexId);
+        $neighbors = [];
+
+        foreach ($vertex->getAllEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            foreach ($edge->getEndpointIds() as $endpointId) {
+                if ($endpointId !== $vertexId) {
+                    $neighbors[$endpointId] = $this->getVertex($endpointId);
+                }
+            }
+        }
+
+        return $neighbors;
+    }
+
+    /**
+     * Get all incoming neighboring vertices.
+     *
+     * @param string $vertexId
+     * @return array<Vertex>
+     * @throws OutOfBoundsException
+     */
+    public function getIncomingNeighbors(string $vertexId): array
+    {
+        $vertex = $this->getVertex($vertexId);
+        $neighbors = [];
+
+        foreach ($vertex->getIncomingEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof DirectedEdge) {
+                $sourceId = $edge->getSourceId();
+                $neighbors[$sourceId] = $this->getVertex($sourceId);
+            }
+        }
+
+        foreach ($vertex->getUndirectedEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            foreach ($edge->getEndpointIds() as $endpointId) {
+                if ($endpointId !== $vertexId) {
+                    $neighbors[$endpointId] = $this->getVertex($endpointId);
+                }
+            }
+        }
+
+        return $neighbors;
+    }
+
+    /**
+     * Get all outgoing neighboring vertices.
+     *
+     * @param string $vertexId
+     * @return array<Vertex>
+     * @throws OutOfBoundsException
+     */
+    public function getOutgoingNeighbors(string $vertexId): array
+    {
+        $vertex = $this->getVertex($vertexId);
+        $neighbors = [];
+
+        foreach ($vertex->getOutgoingEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            if ($edge instanceof DirectedEdge) {
+                $destId = $edge->getDestinationId();
+                $neighbors[$destId] = $this->getVertex($destId);
+            }
+        }
+
+        foreach ($vertex->getUndirectedEdgeIds() as $edgeId) {
+            $edge = $this->getEdge($edgeId);
+            foreach ($edge->getEndpointIds() as $endpointId) {
+                if ($endpointId !== $vertexId) {
+                    $neighbors[$endpointId] = $this->getVertex($endpointId);
+                }
+            }
+        }
+
+        return $neighbors;
+    }
+
+    /**
+     * Check if two vertices are neighbors.
+     *
+     * @param string $vertexId
+     * @param string $neighborId
+     * @return bool
+     * @throws OutOfBoundsException
+     */
+    public function hasNeighbor(string $vertexId, string $neighborId): bool
+    {
+        $neighbors = $this->getNeighbors($vertexId);
+        return isset($neighbors[$neighborId]);
+    }
+
+    /**
+     * Check if a specific vertex is an incoming neighbor.
+     *
+     * @param string $vertexId
+     * @param string $neighborId
+     * @return bool
+     * @throws OutOfBoundsException
+     */
+    public function hasIncomingNeighbor(string $vertexId, string $neighborId): bool
+    {
+        $neighbors = $this->getIncomingNeighbors($vertexId);
+        return isset($neighbors[$neighborId]);
+    }
+
+    /**
+     * Check if a specific vertex is an outgoing neighbor.
+     *
+     * @param string $vertexId
+     * @param string $neighborId
+     * @return bool
+     * @throws OutOfBoundsException
+     */
+    public function hasOutgoingNeighbor(string $vertexId, string $neighborId): bool
+    {
+        $neighbors = $this->getOutgoingNeighbors($vertexId);
+        return isset($neighbors[$neighborId]);
+    }
+
+    /**
+     * Count the total number of unique neighbors.
+     *
+     * @param string $vertexId
+     * @return int
+     * @throws OutOfBoundsException
+     */
+    public function countNeighbors(string $vertexId): int
+    {
+        return count($this->getNeighbors($vertexId));
+    }
+
+    /**
+     * Count the total number of unique incoming neighbors.
+     *
+     * @param string $vertexId
+     * @return int
+     * @throws OutOfBoundsException
+     */
+    public function countIncomingNeighbors(string $vertexId): int
+    {
+        return count($this->getIncomingNeighbors($vertexId));
+    }
+
+    /**
+     * Count the total number of unique outgoing neighbors.
+     *
+     * @param string $vertexId
+     * @return int
+     * @throws OutOfBoundsException
+     */
+    public function countOutgoingNeighbors(string $vertexId): int
+    {
+        return count($this->getOutgoingNeighbors($vertexId));
     }
 }

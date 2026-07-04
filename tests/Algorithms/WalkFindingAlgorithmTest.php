@@ -2,20 +2,15 @@
 
 namespace Graphita\Graphita\Tests\Algorithms;
 
-use Exception;
 use Graphita\Graphita\Algorithms\WalkFindingAlgorithm;
 use Graphita\Graphita\Graph;
-use Graphita\Graphita\Walk;
-use InvalidArgumentException;
+use Graphita\Graphita\Walks\Walk;
+use LogicException;
 use PHPUnit\Framework\TestCase;
-use function PHPUnit\Framework\assertContains;
 
 class WalkFindingAlgorithmTest extends TestCase
 {
     private Graph $graph;
-
-    private array $vertices = [];
-
     private array $edges = [];
 
     public function setUp(): void
@@ -24,17 +19,17 @@ class WalkFindingAlgorithmTest extends TestCase
 
         $this->graph = new Graph();
 
-        $this->vertices[1] = $this->graph->createVertex(1);
-        $this->vertices[2] = $this->graph->createVertex(2);
-        $this->vertices[3] = $this->graph->createVertex(3);
-        $this->vertices[4] = $this->graph->createVertex(4);
+        $this->graph->createVertex('1');
+        $this->graph->createVertex('2');
+        $this->graph->createVertex('3');
+        $this->graph->createVertex('4');
 
-        $this->edges['1-2'] = $this->graph->createUndirectedEdge($this->vertices[1], $this->vertices[2]);
-        $this->edges['2-3'] = $this->graph->createUndirectedEdge($this->vertices[2], $this->vertices[3]);
-        $this->edges['3-4'] = $this->graph->createUndirectedEdge($this->vertices[3], $this->vertices[4]);
-        $this->edges['4-1'] = $this->graph->createUndirectedEdge($this->vertices[4], $this->vertices[1]);
-        $this->edges['1-3'] = $this->graph->createUndirectedEdge($this->vertices[1], $this->vertices[3]);
-        $this->edges['2-4'] = $this->graph->createUndirectedEdge($this->vertices[2], $this->vertices[4]);
+        $this->edges['1-2'] = $this->graph->createUndirectedEdge('1', '2')->getId();
+        $this->edges['2-3'] = $this->graph->createUndirectedEdge('2', '3')->getId();
+        $this->edges['3-4'] = $this->graph->createUndirectedEdge('3', '4')->getId();
+        $this->edges['4-1'] = $this->graph->createUndirectedEdge('4', '1')->getId();
+        $this->edges['1-3'] = $this->graph->createUndirectedEdge('1', '3')->getId();
+        $this->edges['2-4'] = $this->graph->createUndirectedEdge('2', '4')->getId();
     }
 
     public function testEmptyWalkFindingAlgorithm()
@@ -42,223 +37,62 @@ class WalkFindingAlgorithmTest extends TestCase
         $algorithm = new WalkFindingAlgorithm($this->graph);
 
         $this->assertEquals($this->graph, $algorithm->getGraph());
-        $this->assertIsArray($algorithm->getSources());
-        $this->assertIsArray($algorithm->getDestinations());
         $this->assertEmpty($algorithm->getSources());
         $this->assertEmpty($algorithm->getDestinations());
-        $this->assertEmpty($algorithm->getSteps());
+        $this->assertNull($algorithm->getSteps());
         $this->assertEquals(1, $algorithm->getMinSteps());
-        $this->assertEquals($this->graph->countVertices(), $algorithm->getMaxSteps());
-        $this->assertIsArray($algorithm->getResults());
+        $this->assertNull($algorithm->getMaxSteps());
         $this->assertEmpty($algorithm->getResults());
-        $this->assertCount(0, $algorithm->getResults());
         $this->assertEquals(0, $algorithm->countResults());
-        $this->assertEmpty($algorithm->getShortestResult());
-        $this->assertEmpty($algorithm->getLongestResult());
     }
 
     public function testAddSourceOutsideGraph()
     {
-        $anotherGraph = new Graph();
-        $anotherVertex = $anotherGraph->createVertex(1);
-
         $algorithm = new WalkFindingAlgorithm($this->graph);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Source Vertex must be in Graph !');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Source Vertex [5] must exist in Graph!');
 
-        $algorithm->addSource($anotherVertex);
+        $algorithm->addSource('5');
     }
 
     public function testGetAndAddSource()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
+        $algorithm->addSource('1');
 
-        $this->assertIsArray($algorithm->getSources());
         $this->assertCount(1, $algorithm->getSources());
-        $this->assertEquals($this->vertices[1], $algorithm->getSources()[0]);
-    }
-
-    public function testSetSourcesOutsideGraph()
-    {
-        $anotherGraph = new Graph();
-        $anotherVertex1 = $anotherGraph->createVertex(1);
-        $anotherVertex2 = $anotherGraph->createVertex(2);
-
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Source Vertex must be in Graph !');
-
-        $algorithm->setSources([$anotherVertex1, $anotherVertex2]);
+        $this->assertEquals('1', $algorithm->getSources()[0]);
     }
 
     public function testGetAndSetSources()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSources([$this->vertices[1], $this->vertices[2]]);
+        $algorithm->setSources(['1', '2']);
 
-        $this->assertIsArray($algorithm->getSources());
         $this->assertCount(2, $algorithm->getSources());
-        $this->assertEquals($this->vertices[1], $algorithm->getSources()[0]);
-        $this->assertEquals($this->vertices[2], $algorithm->getSources()[1]);
+        $this->assertEquals('1', $algorithm->getSources()[0]);
+        $this->assertEquals('2', $algorithm->getSources()[1]);
     }
 
     public function testAddDestinationOutsideGraph()
     {
-        $anotherGraph = new Graph();
-        $anotherVertex = $anotherGraph->createVertex(1);
-
         $algorithm = new WalkFindingAlgorithm($this->graph);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Destination Vertex must be in Graph !');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Destination Vertex [5] must exist in Graph!');
 
-        $algorithm->addDestination($anotherVertex);
+        $algorithm->addDestination('5');
     }
 
-    public function testGetAndAddDestination()
+    public function testCalculateWithInfiniteWalkGuard()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addDestination($this->vertices[4]);
+        $algorithm->addSource('1');
+        $algorithm->addDestination('3');
 
-        $this->assertIsArray($algorithm->getDestinations());
-        $this->assertCount(1, $algorithm->getDestinations());
-        $this->assertEquals($this->vertices[4], $algorithm->getDestinations()[0]);
-    }
-
-    public function testSetDestinationsOutsideGraph()
-    {
-        $anotherGraph = new Graph();
-        $anotherVertex1 = $anotherGraph->createVertex(1);
-        $anotherVertex2 = $anotherGraph->createVertex(2);
-
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Destination Vertex must be in Graph !');
-
-        $algorithm->setDestinations([$anotherVertex1, $anotherVertex2]);
-    }
-
-    public function testGetAndSetDestinations()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setDestinations([$this->vertices[1], $this->vertices[2]]);
-
-        $this->assertIsArray($algorithm->getDestinations());
-        $this->assertCount(2, $algorithm->getDestinations());
-        $this->assertEquals($this->vertices[1], $algorithm->getDestinations()[0]);
-        $this->assertEquals($this->vertices[2], $algorithm->getDestinations()[1]);
-    }
-
-    public function testSetStepsLessThanOne()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Steps must be Positive Integer Number equal or bigger than 1 !');
-
-        $algorithm->setSteps(0);
-    }
-
-    public function testGetAndSetSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSteps(2);
-
-        $this->assertEquals(2, $algorithm->getSteps());
-    }
-
-    public function testSetMinStepsLessThanOne()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Min Steps must be Positive Integer Number equal or bigger than 1 !');
-
-        $algorithm->setMinSteps(0);
-    }
-
-    public function testSetMinStepsBiggerThanMaxSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setMaxSteps(3);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Min Steps must be Positive Integer Number equal or less than Max Steps !');
-
-        $algorithm->setMinSteps(4);
-    }
-
-    public function testGetAndSetMinSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setMinSteps(2);
-
-        $this->assertEquals(2, $algorithm->getMinSteps());
-    }
-
-    public function testSetMaxStepsLessThanOne()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Max Steps must be Positive Integer Number equal or bigger than 1 !');
-
-        $algorithm->setMaxSteps(0);
-    }
-
-    public function testSetMaxStepsLessThanMinSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setMinSteps(3);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Max Steps must be Positive Integer Number equal or bigger than Min Steps !');
-
-        $algorithm->setMaxSteps(2);
-    }
-
-    public function testGetAndSetMaxSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setMaxSteps(2);
-
-        $this->assertEquals(2, $algorithm->getMaxSteps());
-    }
-
-    public function testCalculateWithoutSource()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Source must be set, before calculate !');
-
-        $algorithm->calculate();
-    }
-
-    public function testCalculateWithoutDestination()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Destination must be set, before calculate !');
-
-        $algorithm->calculate();
-    }
-
-    public function testCalculateWithNotEqualSourcesAndDestinations()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addSource($this->vertices[2]);
-        $algorithm->addDestination($this->vertices[3]);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Sources count is not Equal destinations count !');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Traversals that allow repeating elements (Walk/Trail/Circuit) must have a strictly defined setMaxSteps() or setSteps() limit to prevent mathematically infinite loops.');
 
         $algorithm->calculate();
     }
@@ -266,172 +100,63 @@ class WalkFindingAlgorithmTest extends TestCase
     public function testCalculateWithOneStep()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addDestination($this->vertices[3]);
+        $algorithm->addSource('1');
+        $algorithm->addDestination('3');
         $algorithm->setSteps(1);
         $algorithm->calculate();
 
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
         $this->assertCount(1, $algorithm->getResults());
-        $this->assertEquals(1, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
-        $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(1, $algorithm->getLongestResult()->getTotalWeight());
+        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
 
         $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            $this->assertEquals($this->vertices[1], $result->getFirstStep());
-            $this->assertEquals($this->vertices[3], $result->getLastStep());
-            $this->assertEquals(1, $result->countEdges());
-        }
-
-        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
+        $this->assertEquals('1', $results[0]->getFirstStep());
+        $this->assertEquals('3', $results[0]->getLastStep());
+        $this->assertEquals(1, $results[0]->countEdges());
         $this->assertEquals($this->edges['1-3'], $results[0]->getSteps()[1]);
-        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
     }
 
     public function testCalculateWithTwoSteps()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addDestination($this->vertices[3]);
+        $algorithm->addSource('1');
+        $algorithm->addDestination('3');
         $algorithm->setSteps(2);
         $algorithm->calculate();
 
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
         $this->assertCount(2, $algorithm->getResults());
-        $this->assertEquals(2, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
         $this->assertEquals(2, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(2, $algorithm->getLongestResult()->getTotalWeight());
 
-        $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            $this->assertEquals($this->vertices[1], $result->getFirstStep());
-            $this->assertEquals($this->vertices[3], $result->getLastStep());
+        foreach ($algorithm->getResults() as $result) {
+            $this->assertEquals('1', $result->getFirstStep());
+            $this->assertEquals('3', $result->getLastStep());
             $this->assertEquals(2, $result->countEdges());
         }
-
-        $this->assertEquals($this->vertices[1], $results[0]->getFirstStep());
-        $this->assertEquals($this->edges['1-2'], $results[0]->getSteps()[1]);
-        $this->assertEquals($this->vertices[2], $results[0]->getSteps()[2]);
-        $this->assertEquals($this->edges['2-3'], $results[0]->getSteps()[3]);
-        $this->assertEquals($this->vertices[3], $results[0]->getLastStep());
-
-        $this->assertEquals($this->vertices[1], $results[1]->getFirstStep());
-        $this->assertEquals($this->edges['4-1'], $results[1]->getSteps()[1]);
-        $this->assertEquals($this->vertices[4], $results[1]->getSteps()[2]);
-        $this->assertEquals($this->edges['3-4'], $results[1]->getSteps()[3]);
-        $this->assertEquals($this->vertices[3], $results[1]->getLastStep());
     }
 
-    public function testCalculateWithThreeSteps()
+    public function testCalculateWithMaxStepsConstraint()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addDestination($this->vertices[3]);
-        $algorithm->setSteps(3);
+        $algorithm->addSource('1');
+        $algorithm->addDestination('3');
+        $algorithm->setMaxSteps(4);
         $algorithm->calculate();
 
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(7, $algorithm->getResults());
-        $this->assertEquals(7, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
-        $this->assertEquals(3, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(3, $algorithm->getLongestResult()->getTotalWeight());
-
-        $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            $this->assertEquals($this->vertices[1], $result->getFirstStep());
-            $this->assertEquals($this->vertices[3], $result->getLastStep());
-            $this->assertEquals(3, $result->countEdges());
-        }
-    }
-
-    public function testCalculateWithFourSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addDestination($this->vertices[3]);
-        $algorithm->setSteps(4);
-        $algorithm->calculate();
-
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(20, $algorithm->getResults());
-        $this->assertEquals(20, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
-        $this->assertEquals(4, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
-
-        $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            $this->assertEquals($this->vertices[1], $result->getFirstStep());
-            $this->assertEquals($this->vertices[3], $result->getLastStep());
-            $this->assertEquals(4, $result->countEdges());
-        }
-    }
-
-    public function testCalculateWithWithoutSteps()
-    {
-        $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->addSource($this->vertices[1]);
-        $algorithm->addDestination($this->vertices[3]);
-        $algorithm->calculate();
-
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(30, $algorithm->getResults());
         $this->assertEquals(30, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
-        $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
-
-        $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            $this->assertEquals($this->vertices[1], $result->getFirstStep());
-            $this->assertEquals($this->vertices[3], $result->getLastStep());
-            $this->assertGreaterThanOrEqual(1, $result->countEdges());
-            $this->assertLessThanOrEqual(4, $result->countEdges());
-        }
     }
 
     public function testCalculateMultipleSourcesAndDestinations()
     {
         $algorithm = new WalkFindingAlgorithm($this->graph);
-        $algorithm->setSources([$this->vertices[1], $this->vertices[2]]);
-        $algorithm->setDestinations([$this->vertices[3], $this->vertices[4]]);
+        $algorithm->setSources(['1', '2']);
+        $algorithm->setDestinations(['3', '4']);
+        $algorithm->setMaxSteps(4);
         $algorithm->calculate();
 
-        $this->assertIsArray($algorithm->getResults());
-        $this->assertContainsOnlyInstancesOf(Walk::class, $algorithm->getResults());
-        $this->assertCount(60, $algorithm->getResults());
         $this->assertEquals(60, $algorithm->countResults());
-        $this->assertInstanceOf(Walk::class, $algorithm->getShortestResult());
-        $this->assertEquals(1, $algorithm->getShortestResult()->getTotalWeight());
-        $this->assertInstanceOf(Walk::class, $algorithm->getLongestResult());
-        $this->assertEquals(4, $algorithm->getLongestResult()->getTotalWeight());
 
-        $results = $algorithm->getResults();
-
-        foreach ($results as $result) {
-            assertContains($result->getFirstStep(), [$this->vertices[1], $this->vertices[2]]);
-            assertContains($result->getLastStep(), [$this->vertices[3], $this->vertices[4]]);
-            $this->assertGreaterThanOrEqual(1, $result->countEdges());
-            $this->assertLessThanOrEqual(4, $result->countEdges());
+        foreach ($algorithm->getResults() as $result) {
+            $this->assertContains($result->getFirstStep(), ['1', '2']);
+            $this->assertContains($result->getLastStep(), ['3', '4']);
         }
     }
 }

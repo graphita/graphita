@@ -2,50 +2,18 @@
 
 namespace Graphita\Graphita\Abstracts;
 
-use Graphita\Graphita\Graph;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
-use Graphita\Graphita\Vertex;
 
 abstract class AbstractEdge
 {
-    /**
-     * @var string
-     */
-    private string $id;
-
-    /**
-     * @var Graph
-     */
-    private Graph $graph;
-
-    /**
-     * @var float
-     */
-    private float $weight = 1;
-
-    /**
-     * @var array
-     */
-    private array $vertices = array();
+    protected string $id;
+    protected float $weight = 1.0;
 
     use AttributesHandlerTrait;
 
     /**
-     * @param Vertex $a
-     * @param Vertex $b
-     * @param Graph $graph
-     * @param array $attributes
-     */
-    public function __construct(Vertex &$a, Vertex &$b, Graph &$graph, array $attributes = array())
-    {
-        $this->id = uniqid($a->getId() . '-' . $b->getId() . '-');
-        $this->vertices[$a->getId()] = $a;
-        $this->vertices[$b->getId()] = $b;
-        $this->graph = $graph;
-        $this->setAttributes($attributes);
-    }
-
-    /**
+     * Get the unique identifier of the edge.
+     *
      * @return string
      */
     public function getId(): string
@@ -54,31 +22,8 @@ abstract class AbstractEdge
     }
 
     /**
-     * @return Graph
-     */
-    public function getGraph(): Graph
-    {
-        return $this->graph;
-    }
-
-    /**
-     * @return array
-     */
-    public function getVertices(): array
-    {
-        return $this->vertices;
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasVertex($id): bool
-    {
-        return array_key_exists($id, $this->vertices);
-    }
-
-    /**
+     * Get the weight of the edge.
+     *
      * @return float
      */
     public function getWeight(): float
@@ -87,12 +32,29 @@ abstract class AbstractEdge
     }
 
     /**
-     * @param float|int $weight
-     * @return AbstractEdge
+     * Set the weight of the edge.
+     *
+     * @param float $weight
+     * @return self
      */
-    public function setWeight(float $weight): AbstractEdge
+    public function setWeight(float $weight): self
     {
         $this->weight = $weight;
         return $this;
     }
+
+    /**
+     * Get the IDs of the vertices this edge connects.
+     *
+     * @return array<string>
+     */
+    abstract public function getEndpointIds(): array;
+
+    /**
+     * Check if a specific vertex ID is part of this edge.
+     *
+     * @param string $id
+     * @return bool
+     */
+    abstract public function hasVertexId(string $id): bool;
 }
