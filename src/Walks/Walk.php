@@ -176,6 +176,19 @@ class Walk
     }
 
     /**
+     * Calculate the total weight of the walk.
+     *
+     * @return void
+     */
+    public function calculateTotalWeight(): void
+    {
+        $this->totalWeight = 0.0;
+        foreach ($this->getEdges() as $edgeId) {
+            $this->totalWeight += $this->graph->getEdge($edgeId)->getWeight();
+        }
+    }
+
+    /**
      * Get an array of all vertex IDs in the walk.
      *
      * @return array<string>
