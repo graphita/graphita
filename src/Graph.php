@@ -154,7 +154,7 @@ class Graph
             throw new OutOfBoundsException('Source and Destination Vertices must exist in the graph.');
         }
 
-        $edgeId = 'e_' . (++$this->edgeIdCounter);
+        $edgeId = 'Edge_' . (++$this->edgeIdCounter);
         $edge = new DirectedEdge($edgeId, $sourceId, $destinationId, $attributes);
 
         $this->edges[$edgeId] = $edge;
@@ -179,7 +179,7 @@ class Graph
             throw new OutOfBoundsException('Both Vertices must exist in the graph.');
         }
 
-        $edgeId = 'e_' . (++$this->edgeIdCounter);
+        $edgeId = 'Edge_' . (++$this->edgeIdCounter);
         $edge = new UndirectedEdge($edgeId, $nodeAId, $nodeBId, $attributes);
 
         $this->edges[$edgeId] = $edge;
