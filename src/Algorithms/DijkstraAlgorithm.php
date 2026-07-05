@@ -181,11 +181,14 @@ class DijkstraAlgorithm
             throw new LogicException('Sources and Destinations must be set before calculating!');
         }
 
-        if (count($this->sources) !== count($this->destinations)) {
+        $sourceCount = count($this->sources);
+        $destinationsCount = count($this->destinations);
+
+        if ($sourceCount !== $destinationsCount) {
             throw new LogicException('The number of sources must exactly match the number of destinations!');
         }
 
-        for ($i = 0; $i < count($this->sources); $i++) {
+        for ($i = 0; $i < $sourceCount; $i++) {
             $this->runDijkstra($this->sources[$i], $this->destinations[$i]);
         }
 

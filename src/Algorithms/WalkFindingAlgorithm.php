@@ -255,7 +255,8 @@ class WalkFindingAlgorithm
             'isLoop'         => constant($walkClass . '::IS_LOOP'),
         ];
 
-        for ($i = 0; $i < count($this->sources); $i++) {
+        $sourceCount = count($this->sources);
+        for ($i = 0; $i < $sourceCount; $i++) {
             $sourceId = $this->sources[$i];
             $destinationId = $this->destinations[$i];
 
@@ -274,7 +275,7 @@ class WalkFindingAlgorithm
             );
         }
 
-        for ($i = 0; $i < count($this->sources); $i++) {
+        for ($i = 0; $i < $sourceCount; $i++) {
             $sourceId = $this->sources[$i];
             $destinationId = $this->destinations[$i];
 
@@ -419,7 +420,7 @@ class WalkFindingAlgorithm
      */
     public function sortResults(): self
     {
-        usort($this->results, function (Walk $walk1, Walk $walk2) {
+        usort($this->results, function(Walk $walk1, Walk $walk2) {
             if ($walk1->getTotalWeight() == $walk2->getTotalWeight()) {
                 if ($walk1->countEdges() == $walk2->countEdges()) {
                     return strcmp(implode('-', $walk1->getVertices()), implode('-', $walk2->getVertices()));

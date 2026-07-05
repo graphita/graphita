@@ -32,9 +32,9 @@ class AStarAlgorithm
     private array $results = [];
 
     /**
-     * @var callable|null
+     * @var callable
      */
-    private $heuristicFunction = null;
+    private $heuristicFunction;
 
     /**
      * Initialize the algorithm with a Graph instance.
@@ -44,6 +44,7 @@ class AStarAlgorithm
     public function __construct(Graph $graph)
     {
         $this->graph = $graph;
+        $this->heuristicFunction = fn(string $a, string $b): float => 0.0;
     }
 
     /**
@@ -196,11 +197,14 @@ class AStarAlgorithm
             throw new LogicException('Sources and Destinations must be set before calculating!');
         }
 
-        if ($this->heuristicFunction === null) {
-            $this->heuristicFunction = fn(string $a, string $b) => 0.0;
+        $sourceCount = count($this->sources);
+        $destinationsCount = count($this->destinations);
+
+        if ($sourceCount !== $destinationsCount) {
+            throw new LogicException('The number of sources must exactly match the number of destinations!');
         }
 
-        for ($i = 0; $i < count($this->sources); $i++) {
+        for ($i = 0; $i < $sourceCount; $i++) {
             $this->runAStar($this->sources[$i], $this->destinations[$i]);
         }
 
@@ -246,7 +250,9 @@ class AStarAlgorithm
                 }
             }
 
-            if ($currentId === null) break;
+            if ($currentId === null) {
+                break;
+            }
 
             if ($currentId === $destinationId) {
                 $this->buildPath($sourceId, $destinationId, $previousVertex, $previousEdge);

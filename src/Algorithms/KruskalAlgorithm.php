@@ -68,7 +68,7 @@ class KruskalAlgorithm
         }
 
         // 1. Sort all edges by weight ascending
-        usort($edges, function ($a, $b) {
+        usort($edges, function($a, $b) {
             return $a->getWeight() <=> $b->getWeight();
         });
 
