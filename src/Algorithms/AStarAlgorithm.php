@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Walks\Path;
 use LogicException;
@@ -44,7 +45,7 @@ class AStarAlgorithm
     public function __construct(Graph $graph)
     {
         $this->graph = $graph;
-        $this->heuristicFunction = fn(string $a, string $b): float => 0.0;
+        $this->heuristicFunction = fn(string $_a, string $_b): float => 0.0;
     }
 
     /**
@@ -218,6 +219,7 @@ class AStarAlgorithm
      * @param string $destinationId
      * @return void
      * @throws LogicException
+     * @throws Exception
      */
     private function runAStar(string $sourceId, string $destinationId): void
     {
@@ -255,7 +257,7 @@ class AStarAlgorithm
             }
 
             if ($currentId === $destinationId) {
-                $this->buildPath($sourceId, $destinationId, $previousVertex, $previousEdge);
+                $this->buildPath($destinationId, $previousVertex, $previousEdge);
                 return;
             }
 
@@ -300,13 +302,13 @@ class AStarAlgorithm
     /**
      * Backtrack and build the final Path object upon successful targeting.
      *
-     * @param string $sourceId
      * @param string $destinationId
      * @param array $previousVertex
      * @param array $previousEdge
      * @return void
+     * @throws Exception
      */
-    private function buildPath(string $sourceId, string $destinationId, array $previousVertex, array $previousEdge): void
+    private function buildPath(string $destinationId, array $previousVertex, array $previousEdge): void
     {
         $pathVertices = [];
         $pathEdges = [];
@@ -323,7 +325,8 @@ class AStarAlgorithm
         $path = new Path($this->graph);
         $path->start($pathVertices[0]);
 
-        for ($j = 0; $j < count($pathEdges); $j++) {
+        $pathEdgesCount = count($pathEdges);
+        for ($j = 0; $j < $pathEdgesCount; $j++) {
             $path->addStep($pathVertices[$j + 1], $pathEdges[$j]);
         }
 

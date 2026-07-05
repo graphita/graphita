@@ -257,7 +257,8 @@ class BreadthFirstSearchAlgorithm
             $path = new Path($this->graph);
             $path->start($pathVertices[0]);
 
-            for ($j = 0; $j < count($pathEdges); $j++) {
+            $pathEdgesCount = count($pathEdges);
+            for ($j = 0; $j < $pathEdgesCount; $j++) {
                 $path->addStep($pathVertices[$j + 1], $pathEdges[$j]);
             }
 

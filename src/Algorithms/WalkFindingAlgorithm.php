@@ -407,7 +407,8 @@ class WalkFindingAlgorithm
 
         $walk->start($pathVertices[0]);
 
-        for ($i = 0; $i < count($pathEdges); $i++) {
+        $pathEdgesCount = count($pathEdges);
+        for ($i = 0; $i < $pathEdgesCount; $i++) {
             $walk->addStep($pathVertices[$i + 1], $pathEdges[$i]);
         }
 

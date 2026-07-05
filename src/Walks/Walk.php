@@ -5,6 +5,7 @@ namespace Graphita\Graphita\Walks;
 use Exception;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
+use InvalidArgumentException;
 use LogicException;
 
 class Walk
@@ -332,6 +333,10 @@ class Walk
 
         $this->edgeIds[] = $throughEdgeId;
         $this->vertexIds[] = $nextVertexId;
+
+        if ($throughEdgeId === null) {
+            throw new InvalidArgumentException('You must provide a valid Edge ID to complete this step.');
+        }
 
         $this->totalWeight += $this->graph->getEdge($throughEdgeId)->getWeight();
     }
