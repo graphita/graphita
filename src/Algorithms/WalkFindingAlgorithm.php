@@ -3,48 +3,32 @@
 namespace Graphita\Graphita\Algorithms;
 
 use Exception;
-use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Graph;
-use Graphita\Graphita\Vertex;
-use Graphita\Graphita\Walk;
-use InvalidArgumentException;
-use ReflectionClass;
-use Throwable;
+use Graphita\Graphita\Walks\Walk;
+use LogicException;
 
 class WalkFindingAlgorithm
 {
-    /**
-     * @var Graph
-     */
     private Graph $graph;
 
     /**
-     * @var array
+     * @var array<string>
      */
     private array $sources = [];
 
     /**
-     * @var array
+     * @var array<string>
      */
     private array $destinations = [];
 
-    /**
-     * @var ?int
-     */
     private ?int $steps = null;
 
-    /**
-     * @var ?int
-     */
-    private ?int $minSteps = null;
+    private int $minSteps = 1;
 
-    /**
-     * @var ?int
-     */
     private ?int $maxSteps = null;
 
     /**
-     * @var array
+     * @var array<Walk>
      */
     private array $results = [];
 
@@ -53,11 +37,9 @@ class WalkFindingAlgorithm
     /**
      * @param Graph $graph
      */
-    public function __construct(Graph &$graph)
+    public function __construct(Graph $graph)
     {
         $this->graph = $graph;
-        $this->setMinSteps(1);
-        $this->setMaxSteps($this->graph->countVertices());
     }
 
     /**
@@ -69,7 +51,7 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @return array
+     * @return array<string>
      */
     public function getSources(): array
     {
@@ -77,46 +59,45 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @param Vertex|null $source
-     * @return WalkFindingAlgorithm
+     * @param string $sourceId
+     * @return self
      */
-    public function addSource(Vertex &$source): WalkFindingAlgorithm
+    public function addSource(string $sourceId): self
     {
-        if ($source->getGraph() !== $this->getGraph()) {
-            throw new InvalidArgumentException('Source Vertex must be in Graph !');
+        if (!$this->getGraph()->hasVertex($sourceId)) {
+            throw new LogicException("Source Vertex [{$sourceId}] must exist in Graph!");
         }
-        $this->sources[] = $source;
+
+        $this->sources[] = $sourceId;
 
         return $this;
     }
 
     /**
-     * @param array $sources
-     * @return WalkFindingAlgorithm
+     * @param array<string> $sourceIds
+     * @return self
      */
-    public function setSources(array $sources): WalkFindingAlgorithm
+    public function setSources(array $sourceIds): self
     {
         $this->sources = [];
-        foreach ($sources as $source) {
-            $this->addSource($source);
+        foreach ($sourceIds as $sourceId) {
+            $this->addSource($sourceId);
         }
 
         return $this;
     }
 
     /**
-     * @param Vertex|null $source
-     * @return WalkFindingAlgorithm
+     * @param string $sourceId
+     * @return self
      */
-    public function setSource(Vertex &$source): WalkFindingAlgorithm
+    public function setSource(string $sourceId): self
     {
-        $this->setSources([$source]);
-
-        return $this;
+        return $this->setSources([$sourceId]);
     }
 
     /**
-     * @return array
+     * @return array<string>
      */
     public function getDestinations(): array
     {
@@ -124,42 +105,41 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @param Vertex|null $destination
-     * @return WalkFindingAlgorithm
+     * @param string $destinationId
+     * @return self
      */
-    public function addDestination(Vertex &$destination): WalkFindingAlgorithm
+    public function addDestination(string $destinationId): self
     {
-        if ($destination->getGraph() !== $this->getGraph()) {
-            throw new InvalidArgumentException('Destination Vertex must be in Graph !');
+        if (!$this->getGraph()->hasVertex($destinationId)) {
+            throw new LogicException("Destination Vertex [{$destinationId}] must exist in Graph!");
         }
-        $this->destinations[] = $destination;
+
+        $this->destinations[] = $destinationId;
 
         return $this;
     }
 
     /**
-     * @param array $destinations
-     * @return WalkFindingAlgorithm
+     * @param array<string> $destinationIds
+     * @return self
      */
-    public function setDestinations(array $destinations): WalkFindingAlgorithm
+    public function setDestinations(array $destinationIds): self
     {
         $this->destinations = [];
-        foreach ($destinations as $destination) {
-            $this->addDestination($destination);
+        foreach ($destinationIds as $destinationId) {
+            $this->addDestination($destinationId);
         }
 
         return $this;
     }
 
     /**
-     * @param Vertex $destination
-     * @return WalkFindingAlgorithm
+     * @param string $destinationId
+     * @return self
      */
-    public function setDestination(Vertex &$destination): WalkFindingAlgorithm
+    public function setDestination(string $destinationId): self
     {
-        $this->setDestinations([$destination]);
-
-        return $this;
+        return $this->setDestinations([$destinationId]);
     }
 
     /**
@@ -172,12 +152,12 @@ class WalkFindingAlgorithm
 
     /**
      * @param int|null $steps
-     * @return WalkFindingAlgorithm
+     * @return self
      */
-    public function setSteps(?int $steps = null): WalkFindingAlgorithm
+    public function setSteps(?int $steps = null): self
     {
         if ($steps !== null && $steps < 1) {
-            throw new InvalidArgumentException('Steps must be Positive Integer Number equal or bigger than 1 !');
+            throw new LogicException('Steps must be a positive integer equal to or greater than 1!');
         }
         $this->steps = $steps;
 
@@ -194,14 +174,15 @@ class WalkFindingAlgorithm
 
     /**
      * @param int $minSteps
-     * @return WalkFindingAlgorithm
+     * @return self
      */
-    public function setMinSteps(int $minSteps): WalkFindingAlgorithm
+    public function setMinSteps(int $minSteps): self
     {
         if ($minSteps < 1) {
-            throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or bigger than 1 !');
-        } else if ($this->getMaxSteps() !== null && $minSteps > $this->getMaxSteps()) {
-            throw new InvalidArgumentException('Min Steps must be Positive Integer Number equal or less than Max Steps !');
+            throw new LogicException('Min Steps must be a positive integer equal to or greater than 1!');
+        }
+        if ($this->getMaxSteps() !== null && $minSteps > $this->getMaxSteps()) {
+            throw new LogicException('Min Steps must be less than or equal to Max Steps!');
         }
         $this->minSteps = $minSteps;
 
@@ -218,14 +199,15 @@ class WalkFindingAlgorithm
 
     /**
      * @param int $maxSteps
-     * @return WalkFindingAlgorithm
+     * @return self
      */
-    public function setMaxSteps(int $maxSteps): WalkFindingAlgorithm
+    public function setMaxSteps(int $maxSteps): self
     {
         if ($maxSteps < 1) {
-            throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than 1 !');
-        } else if ($this->getMinSteps() !== null && $maxSteps < $this->getMinSteps()) {
-            throw new InvalidArgumentException('Max Steps must be Positive Integer Number equal or bigger than Min Steps !');
+            throw new LogicException('Max Steps must be a positive integer equal to or greater than 1!');
+        }
+        if ($this->getMinSteps() !== null && $maxSteps < $this->getMinSteps()) {
+            throw new LogicException('Max Steps must be equal to or greater than Min Steps!');
         }
         $this->maxSteps = $maxSteps;
 
@@ -233,7 +215,7 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @return array
+     * @return array<Walk>
      */
     public function getResults(): array
     {
@@ -249,178 +231,208 @@ class WalkFindingAlgorithm
     }
 
     /**
-     * @return $this
-     * @throws Exception
+     * @return self
+     * @throws LogicException|Exception
      */
-    public function calculate(): WalkFindingAlgorithm
+    public function calculate(): self
     {
         if (empty($this->getSources())) {
-            throw new Exception('Source must be set, before calculate !');
+            throw new LogicException('Sources must be set before calculating!');
         }
 
         if (empty($this->getDestinations())) {
-            throw new Exception('Destination must be set, before calculate !');
+            throw new LogicException('Destinations must be set before calculating!');
         }
 
-        if (count($this->getSources()) != count($this->getDestinations())) {
-            throw new Exception('Sources count is not Equal destinations count !');
+        if (count($this->getSources()) !== count($this->getDestinations())) {
+            throw new LogicException('The number of sources must exactly match the number of destinations!');
         }
 
-        if ($this->getSteps() === null) {
-            for ($step = $this->getMinSteps(); $step <= $this->getMaxSteps(); $step++) {
-                $walks = (new static($this->graph))
-                    ->setSources($this->getSources())
-                    ->setDestinations($this->getDestinations())
-                    ->setSteps($step)
-                    ->calculate()
-                    ->getResults();
+        $walkClass = static::TRAVERSE_TYPE;
+        $rules = [
+            'repeatVertices' => constant($walkClass . '::REPEAT_VERTICES'),
+            'repeatEdges'    => constant($walkClass . '::REPEAT_EDGES'),
+            'isLoop'         => constant($walkClass . '::IS_LOOP'),
+        ];
 
-                $this->addResults($walks);
-            }
-        } else {
-            $graph = $this->getGraph();
+        $sourceCount = count($this->sources);
+        for ($i = 0; $i < $sourceCount; $i++) {
+            $sourceId = $this->sources[$i];
+            $destinationId = $this->destinations[$i];
 
-            /** @var Walk[] $walks */
-            $walks = [];
-
-            $startedSources = [];
-            for ($index = 0; $index < count($this->getSources()); $index++) {
-                /** @var Vertex $source */
-                $source = $this->getSources()[$index];
-
-                if( in_array($source->getId(), $startedSources) ){
-                    continue;
-                }
-
-                /** @var Walk $walk */
-                $walk = (new ReflectionClass(static::TRAVERSE_TYPE))->newInstanceArgs([
-                    &$graph
-                ]);
-                $walk->start($source);
-
-                $walks[] = $walk;
-
-                $startedSources[] = $source->getId();
+            if ($rules['isLoop'] && $sourceId !== $destinationId) {
+                throw new LogicException("For loop traversals, the source and destination MUST be identical.");
             }
 
-            for ($step = 1; $step <= $this->getSteps(); $step++) {
-                $newWalks = [];
-
-                foreach ($walks as $walk) {
-                    /** @var Vertex $lastVertex */
-                    $lastVertex = $walk->getLastStep();
-
-                    /** @var AbstractEdge[] $outgoingEdges */
-                    $outgoingEdges = $lastVertex->getOutgoingEdges();
-
-                    foreach ($outgoingEdges as $outgoingEdge) {
-                        /** @var Vertex[] $vertices */
-                        $vertices = $outgoingEdge->getVertices();
-
-                        /** @var array $verticesId */
-                        $verticesId = array_keys($vertices);
-
-                        $nextVertex = $vertices[$verticesId[0]]->getId() == $lastVertex->getId() ? $vertices[$verticesId[1]] : $vertices[$verticesId[0]];
-
-                        try {
-                            $newWalk = clone $walk;
-                            $newWalk->addStep($nextVertex, $outgoingEdge);
-
-                            $newWalks[] = $newWalk;
-                        } catch (Throwable $exception) {
-                            // Nothing to do, because it's important to add step successfully !
-                        }
-                    }
-                }
-
-                $newWalks = array_filter($newWalks, function (Walk $newWalk) {
-                    return $newWalk->countEdges() <= $this->getSteps();
-                });
-
-                $walks = $newWalks;
+            if (!$rules['isLoop'] && $sourceId === $destinationId) {
+                throw new LogicException("For non-loop traversals, the source and destination CANNOT be identical.");
             }
-
-            foreach ($walks as $walk) {
-                try {
-                    $walk->finish();
-                } catch (Throwable $exception) {
-                    // Nothing to do, because it's important to finish successfully !
-                }
-            }
-
-            $sources = array_map(function (Vertex $vertex) {
-                return $vertex->getId();
-            }, $this->getSources());
-            $destinations = array_map(function (Vertex $vertex) {
-                return $vertex->getId();
-            }, $this->getDestinations());
-
-            $walks = array_filter($walks, function (Walk $walk) use ($destinations, $sources) {
-                if (
-                    ! $walk->isFinished() ||
-                    $walk->countEdges() != $this->getSteps()
-                ) {
-                    return false;
-                }
-
-                if(
-                    ! in_array($walk->getFirstStep()->getId(), $sources) ||
-                    ! in_array($walk->getLastStep()->getId(), $destinations)
-                ) {
-                    return false;
-                }
-
-                $sourceIndex = array_search($walk->getFirstStep()->getId(), $sources);
-                $destinationIndex = array_search($walk->getLastStep()->getId(), $destinations);
-
-                return $sourceIndex == $destinationIndex;
-            });
-
-            $this->addResults($walks);
         }
+
+        if (($rules['repeatVertices'] || $rules['repeatEdges']) && $this->maxSteps === null && $this->steps === null) {
+            throw new LogicException(
+                'Traversals that allow repeating elements (Walk/Trail/Circuit) must have a strictly defined setMaxSteps() or setSteps() limit to prevent mathematically infinite loops.'
+            );
+        }
+
+        for ($i = 0; $i < $sourceCount; $i++) {
+            $sourceId = $this->sources[$i];
+            $destinationId = $this->destinations[$i];
+
+            $pathVertices = [$sourceId];
+            $pathEdges = [];
+            $visitedVertices = [$sourceId => true];
+            $visitedEdges = [];
+
+            $this->dfs(
+                $sourceId,
+                $destinationId,
+                $pathVertices,
+                $pathEdges,
+                $visitedVertices,
+                $visitedEdges,
+                0,
+                $rules
+            );
+        }
+
         return $this;
     }
 
     /**
-     * @param Walk[] $walks
-     * @param bool $sort
+     * @param string $currentVertex
+     * @param string $targetVertex
+     * @param array<string> $pathVertices
+     * @param array<string> $pathEdges
+     * @param array<string, bool> $visitedVertices
+     * @param array<string, bool> $visitedEdges
+     * @param int $depth
+     * @param array $rules
      * @return void
+     * @throws Exception
      */
-    private function addResults(array $walks, bool $sort = false): void
-    {
-        foreach ($walks as $walk) {
-            $this->results[] = $walk;
+    private function dfs(
+        string $currentVertex,
+        string $targetVertex,
+        array &$pathVertices,
+        array &$pathEdges,
+        array &$visitedVertices,
+        array &$visitedEdges,
+        int $depth,
+        array $rules
+    ): void {
+        if ($this->steps !== null && $depth > $this->steps) {
+            return;
         }
 
-        if ($sort) {
-            $this->sortResults();
+        if ($this->maxSteps !== null && $depth > $this->maxSteps) {
+            return;
+        }
+
+        $minRequired = $this->steps ?? $this->minSteps ?? 1;
+
+        if ($depth >= $minRequired && $currentVertex === $targetVertex) {
+            if ($this->steps === null || $depth === $this->steps) {
+                $this->buildAndStoreWalk($pathVertices, $pathEdges);
+            }
+
+            if ($rules['isLoop'] && !$rules['repeatVertices']) {
+                return;
+            }
+        }
+
+        $neighbors = $this->graph->getOutgoingNeighbors($currentVertex);
+
+        foreach ($neighbors as $neighborId => $neighborObj) {
+            $neighborId = (string) $neighborId;
+            $edges = $this->graph->getOutgoingEdgesTo($currentVertex, $neighborId);
+
+            foreach ($edges as $edgeId => $edge) {
+                $edgeId = (string) $edgeId;
+
+                if (!$rules['repeatEdges'] && isset($visitedEdges[$edgeId])) {
+                    continue;
+                }
+
+                if (!$rules['repeatVertices'] && isset($visitedVertices[$neighborId])) {
+                    if (!($rules['isLoop'] && $neighborId === $pathVertices[0])) {
+                        continue;
+                    }
+                }
+
+                $pathVertices[] = $neighborId;
+                $pathEdges[] = $edgeId;
+
+                $wasEdgeVisited = isset($visitedEdges[$edgeId]);
+                $visitedEdges[$edgeId] = true;
+
+                $wasVertexVisited = isset($visitedVertices[$neighborId]);
+                $visitedVertices[$neighborId] = true;
+
+                $this->dfs(
+                    $neighborId,
+                    $targetVertex,
+                    $pathVertices,
+                    $pathEdges,
+                    $visitedVertices,
+                    $visitedEdges,
+                    $depth + 1,
+                    $rules
+                );
+
+                array_pop($pathVertices);
+                array_pop($pathEdges);
+
+                if (!$wasEdgeVisited) {
+                    unset($visitedEdges[$edgeId]);
+                }
+
+                if (!$wasVertexVisited) {
+                    unset($visitedVertices[$neighborId]);
+                }
+            }
         }
     }
 
     /**
+     * @param array<string> $pathVertices
+     * @param array<string> $pathEdges
      * @return void
+     * @throws Exception
      */
-    private function sortResults(): void
+    private function buildAndStoreWalk(array $pathVertices, array $pathEdges): void
     {
-        usort($this->results, function (Walk $walk1, Walk $walk2) {
+        $class = static::TRAVERSE_TYPE;
+        $walk = new $class($this->graph);
+
+        $walk->start($pathVertices[0]);
+
+        $pathEdgesCount = count($pathEdges);
+        for ($i = 0; $i < $pathEdgesCount; $i++) {
+            $walk->addStep($pathVertices[$i + 1], $pathEdges[$i]);
+        }
+
+        $walk->finish();
+        $this->results[] = $walk;
+    }
+
+    /**
+     * @return self
+     */
+    public function sortResults(): self
+    {
+        usort($this->results, function(Walk $walk1, Walk $walk2) {
             if ($walk1->getTotalWeight() == $walk2->getTotalWeight()) {
                 if ($walk1->countEdges() == $walk2->countEdges()) {
-                    $vertices1 = array_map(function (Vertex $vertex) {
-                        return $vertex->getId();
-                    }, $walk1->getVertices());
-
-                    $vertices2 = array_map(function (Vertex $vertex) {
-                        return $vertex->getId();
-                    }, $walk2->getVertices());
-
-                    return strcmp(implode('-', $vertices1), implode('-', $vertices2));
+                    return strcmp(implode('-', $walk1->getVertices()), implode('-', $walk2->getVertices()));
                 }
-
-                return $walk1->countEdges() >= $walk2->countEdges() ? 1 : -1;
+                return $walk1->countEdges() <=> $walk2->countEdges();
             }
 
-            return $walk1->getTotalWeight() > $walk2->getTotalWeight() ? 1 : -1;
+            return $walk1->getTotalWeight() <=> $walk2->getTotalWeight();
         });
+
+        return $this;
     }
 
     /**
@@ -428,11 +440,12 @@ class WalkFindingAlgorithm
      */
     public function getShortestResult(): ?Walk
     {
-        if ($this->countResults()) {
-            return $this->getResults()[0];
+        if ($this->countResults() === 0) {
+            return null;
         }
 
-        return null;
+        $this->sortResults();
+        return $this->results[0];
     }
 
     /**
@@ -440,27 +453,11 @@ class WalkFindingAlgorithm
      */
     public function getLongestResult(): ?Walk
     {
-        if ($this->countResults()) {
-            return $this->getResults()[$this->countResults() - 1];
+        if ($this->countResults() === 0) {
+            return null;
         }
 
-        return null;
-    }
-
-    /**
-     * @return $this
-     */
-    public function calculateTotalWeight(bool $sort = false): WalkFindingAlgorithm
-    {
-        $results = $this->getResults();
-        array_walk($results, function (Walk $walk) {
-            $walk->calculateTotalWeight();
-        });
-
-        if ($sort) {
-            $this->sortResults();
-        }
-
-        return $this;
+        $this->sortResults();
+        return $this->results[$this->countResults() - 1];
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Graphita\Graphita\Algorithms;
 
-use Graphita\Graphita\Path;
+use Graphita\Graphita\Walks\Path;
 
 class PathFindingAlgorithm extends WalkFindingAlgorithm
 {

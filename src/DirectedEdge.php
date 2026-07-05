@@ -6,36 +6,63 @@ use Graphita\Graphita\Abstracts\AbstractEdge;
 
 class DirectedEdge extends AbstractEdge
 {
+    private string $sourceId;
+    private string $destinationId;
+
     /**
-     * @param Vertex $source
-     * @param Vertex $destination
-     * @param Graph $graph
+     * Construct a new Directed Edge.
+     *
+     * @param string $id
+     * @param string $sourceId
+     * @param string $destinationId
      * @param array $attributes
      */
-    public function __construct(Vertex &$source, Vertex &$destination, Graph &$graph, array $attributes = array())
+    public function __construct(string $id, string $sourceId, string $destinationId, array $attributes = [])
     {
-        parent::__construct($source, $destination, $graph, $attributes);
+        $this->id = $id;
+        $this->sourceId = $sourceId;
+        $this->destinationId = $destinationId;
+        $this->setAttributes($attributes);
     }
 
     /**
-     * @return Vertex
+     * Get the ID of the source vertex.
+     *
+     * @return string
      */
-    public function getSource(): Vertex
+    public function getSourceId(): string
     {
-        $vertices = $this->getVertices();
-        $verticesId = array_keys($vertices);
-
-        return $vertices[$verticesId[0]];
+        return $this->sourceId;
     }
 
     /**
-     * @return Vertex
+     * Get the ID of the destination vertex.
+     *
+     * @return string
      */
-    public function getDestination(): Vertex
+    public function getDestinationId(): string
     {
-        $vertices = $this->getVertices();
-        $verticesId = array_keys($vertices);
+        return $this->destinationId;
+    }
 
-        return $vertices[$verticesId[1]];
+    /**
+     * Get the endpoint IDs of this edge.
+     *
+     * @return array<string>
+     */
+    public function getEndpointIds(): array
+    {
+        return [$this->sourceId, $this->destinationId];
+    }
+
+    /**
+     * Check if a specific vertex ID is part of this edge.
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function hasVertexId(string $id): bool
+    {
+        return $this->sourceId === $id || $this->destinationId === $id;
     }
 }

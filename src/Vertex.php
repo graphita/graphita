@@ -2,42 +2,32 @@
 
 namespace Graphita\Graphita;
 
-use Exception;
-use Graphita\Graphita\Abstracts\AbstractEdge;
 use Graphita\Graphita\Traits\AttributesHandlerTrait;
 
 class Vertex
 {
-    /**
-     * @var mixed
-     */
     private string $id;
-
-    /**
-     * @var Graph
-     */
-    private Graph $graph;
-
-    /**
-     * @var array
-     */
-    private array $edges = array();
+    private array $incomingEdgeIds = [];
+    private array $outgoingEdgeIds = [];
+    private array $undirectedEdgeIds = [];
 
     use AttributesHandlerTrait;
 
     /**
+     * Construct a new Vertex.
+     *
      * @param string $id
-     * @param Graph $graph
      * @param array $attributes
      */
-    public function __construct(string $id, Graph &$graph, array $attributes = array())
+    public function __construct(string $id, array $attributes = [])
     {
         $this->id = $id;
-        $this->graph = $graph;
         $this->setAttributes($attributes);
     }
 
     /**
+     * Get the unique identifier of the vertex.
+     *
      * @return string
      */
     public function getId(): string
@@ -46,285 +36,117 @@ class Vertex
     }
 
     /**
-     * @return Graph
-     */
-    public function getGraph(): Graph
-    {
-        return $this->graph;
-    }
-
-    /**
-     * @return array
-     */
-    public function getEdges(): array
-    {
-        return $this->edges;
-    }
-
-    /**
-     * @return array
-     */
-    public function getIncomingEdges(): array
-    {
-        return array_filter($this->getEdges(), function (AbstractEdge $edge) {
-            if(
-                $edge instanceof UndirectedEdge ||
-                (
-                    $edge instanceof DirectedEdge && $edge->getDestination()->getId() == $this->getId()
-                )
-            ){
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
-     * @param Vertex $sourceVertex
-     * @return array
-     */
-    public function getIncomingEdgesFrom(Vertex $sourceVertex): array
-    {
-        return array_filter($this->getIncomingEdges(), function (AbstractEdge $edge) use ($sourceVertex) {
-            if(
-                (
-                    $edge instanceof UndirectedEdge && $edge->hasVertex($sourceVertex->getId())
-                ) ||
-                (
-                    $edge instanceof DirectedEdge && $edge->getSource()->getId() == $sourceVertex->getId()
-                )
-            ){
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
-     * @return array
-     */
-    public function getOutgoingEdges(): array
-    {
-        return array_filter($this->getEdges(), function (AbstractEdge $edge) {
-            if(
-                $edge instanceof UndirectedEdge ||
-                (
-                    $edge instanceof DirectedEdge && $edge->getSource()->getId() == $this->getId()
-                )
-            ){
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
-     * @param Vertex $destinationVertex
-     * @return array
-     */
-    public function getOutgoingEdgesTo(Vertex $destinationVertex): array
-    {
-        return array_filter($this->getOutgoingEdges(), function (AbstractEdge $edge) use ($destinationVertex) {
-            if(
-                (
-                    $edge instanceof UndirectedEdge && $edge->hasVertex($destinationVertex->getId())
-                ) ||
-                (
-                    $edge instanceof DirectedEdge && $edge->getDestination()->getId() == $destinationVertex->getId()
-                )
-            ){
-                return true;
-            }
-            return false;
-        });
-    }
-
-    /**
-     * @param AbstractEdge $edge
+     * Add an incoming edge ID.
+     *
+     * @param string $edgeId
      * @return void
-     * @throws Exception
      */
-    public function addEdge(AbstractEdge &$edge): void
+    public function addIncomingEdgeId(string $edgeId): void
     {
-        if ($edge->getGraph() !== $this->getGraph())
-            throw new Exception('Edge & Vertex have to be within the same graph !');
-
-        if (array_key_exists($edge->getId(), $this->edges))
-            throw new Exception('Vertex ' . $this->getId() . ' has connected to Edge ' . $edge->getId() . ' before !');
-
-        $this->edges[$edge->getId()] = $edge;
+        $this->incomingEdgeIds[$edgeId] = $edgeId;
     }
 
     /**
-     * @param $id
+     * Add an outgoing edge ID.
+     *
+     * @param string $edgeId
+     * @return void
+     */
+    public function addOutgoingEdgeId(string $edgeId): void
+    {
+        $this->outgoingEdgeIds[$edgeId] = $edgeId;
+    }
+
+    /**
+     * Add an undirected edge ID.
+     *
+     * @param string $edgeId
+     * @return void
+     */
+    public function addUndirectedEdgeId(string $edgeId): void
+    {
+        $this->undirectedEdgeIds[$edgeId] = $edgeId;
+    }
+
+    /**
+     * Remove an edge ID from all internal lists.
+     *
+     * @param string $edgeId
+     * @return void
+     */
+    public function removeEdgeId(string $edgeId): void
+    {
+        unset(
+            $this->incomingEdgeIds[$edgeId],
+            $this->outgoingEdgeIds[$edgeId],
+            $this->undirectedEdgeIds[$edgeId]
+        );
+    }
+
+    /**
+     * Get all incoming edge IDs.
+     *
+     * @return array<string>
+     */
+    public function getIncomingEdgeIds(): array
+    {
+        return array_values($this->incomingEdgeIds);
+    }
+
+    /**
+     * Get all outgoing edge IDs.
+     *
+     * @return array<string>
+     */
+    public function getOutgoingEdgeIds(): array
+    {
+        return array_values($this->outgoingEdgeIds);
+    }
+
+    /**
+     * Get all undirected edge IDs.
+     *
+     * @return array<string>
+     */
+    public function getUndirectedEdgeIds(): array
+    {
+        return array_values($this->undirectedEdgeIds);
+    }
+
+    /**
+     * Get all connected edge IDs.
+     *
+     * @return array<string>
+     */
+    public function getAllEdgeIds(): array
+    {
+        return array_values(array_merge(
+            $this->incomingEdgeIds,
+            $this->outgoingEdgeIds,
+            $this->undirectedEdgeIds
+        ));
+    }
+
+    /**
+     * Check if the vertex has a specific edge ID.
+     *
+     * @param string $edgeId
      * @return bool
      */
-    public function hasEdge($id): bool
+    public function hasEdgeId(string $edgeId): bool
     {
-        return array_key_exists($id, $this->getEdges());
+        return isset($this->incomingEdgeIds[$edgeId])
+            || isset($this->outgoingEdgeIds[$edgeId])
+            || isset($this->undirectedEdgeIds[$edgeId]);
     }
 
     /**
-     * @param $id
-     * @return bool
-     */
-    public function hasIncomingEdge($id): bool
-    {
-        return array_key_exists($id, $this->getIncomingEdges());
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasOutgoingEdges($id): bool
-    {
-        return array_key_exists($id, $this->getOutgoingEdges());
-    }
-
-    /**
+     * Count the total number of connected edges.
+     *
      * @return int
      */
     public function countEdges(): int
     {
-        return count($this->getEdges());
-    }
-
-    /**
-     * @return int
-     */
-    public function countIncomingEdges(): int
-    {
-        return count($this->getIncomingEdges());
-    }
-
-    /**
-     * @return int
-     */
-    public function countOutgoingEdges(): int
-    {
-        return count($this->getOutgoingEdges());
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function removeEdge($id): bool
-    {
-        if (!$this->hasEdge($id))
-            return false;
-
-        unset($this->edges[$id]);
-        if ($this->getGraph()->hasEdge($id)) {
-            $this->getGraph()->removeEdge($id);
-        }
-
-        return true;
-    }
-
-    /**
-     * @return array
-     */
-    public function getNeighbors(): array
-    {
-        return array_map(function (AbstractEdge $edge) {
-            $vertices = $edge->getVertices();
-            $verticesId = array_keys($vertices);
-            return $vertices[$verticesId[0]]->getId() == $this->getId() ? $vertices[$verticesId[1]] : $vertices[$verticesId[0]];
-        }, $this->getEdges());
-    }
-
-    /**
-     * @return array
-     */
-    public function getIncomingNeighbors(): array
-    {
-        return array_map(function (AbstractEdge $edge) {
-            $vertices = $edge->getVertices();
-            $verticesId = array_keys($vertices);
-            return $vertices[$verticesId[0]]->getId() == $this->getId() ? $vertices[$verticesId[1]] : $vertices[$verticesId[0]];
-        }, $this->getIncomingEdges());
-    }
-
-    /**
-     * @return array
-     */
-    public function getOutgoingNeighbors(): array
-    {
-        return array_map(function (AbstractEdge $edge) {
-            $vertices = $edge->getVertices();
-            $verticesId = array_keys($vertices);
-            return $vertices[$verticesId[0]]->getId() == $this->getId() ? $vertices[$verticesId[1]] : $vertices[$verticesId[0]];
-        }, $this->getOutgoingEdges());
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasNeighbor($id): bool
-    {
-        foreach ($this->getNeighbors() as $neighbor) {
-            if ($neighbor->getId() == $id) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasIncomingNeighbors($id): bool
-    {
-        foreach ($this->getIncomingNeighbors() as $neighbor) {
-            if ($neighbor->getId() == $id) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param $id
-     * @return bool
-     */
-    public function hasOutgoingNeighbors($id): bool
-    {
-        foreach ($this->getOutgoingNeighbors() as $neighbor) {
-            if ($neighbor->getId() == $id) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return int
-     */
-    public function countNeighbors(): int
-    {
-        return count($this->getNeighbors());
-    }
-
-    /**
-     * @return int
-     */
-    public function countIncomingNeighbors(): int
-    {
-        return count($this->getIncomingNeighbors());
-    }
-
-    /**
-     * @return int
-     */
-    public function countOutgoingNeighbors(): int
-    {
-        return count($this->getOutgoingNeighbors());
+        return count($this->incomingEdgeIds) + count($this->outgoingEdgeIds) + count($this->undirectedEdgeIds);
     }
 }
