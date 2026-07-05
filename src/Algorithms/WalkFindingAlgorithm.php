@@ -460,4 +460,16 @@ class WalkFindingAlgorithm
         $this->sortResults();
         return $this->results[$this->countResults() - 1];
     }
+
+    /**
+     * @return void
+     */
+    public function calculateTotalWeight(): void
+    {
+        foreach ($this->getResults() as $walk) {
+            $walk->calculateTotalWeight();
+        }
+
+        $this->sortResults();
+    }
 }
