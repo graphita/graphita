@@ -45,7 +45,7 @@ class AStarAlgorithm
     public function __construct(Graph $graph)
     {
         $this->graph = $graph;
-        $this->heuristicFunction = fn(string $_a, string $_b): float => 0.0;
+        $this->heuristicFunction = fn(): float => 0.0;
     }
 
     /**

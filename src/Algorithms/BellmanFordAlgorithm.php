@@ -2,6 +2,7 @@
 
 namespace Graphita\Graphita\Algorithms;
 
+use Exception;
 use Graphita\Graphita\Graph;
 use Graphita\Graphita\Walks\Path;
 use LogicException;
@@ -208,20 +209,34 @@ class BellmanFordAlgorithm
             throw new LogicException("For non-loop traversals, the source and destination CANNOT be identical.");
         }
 
-        $vertices = $this->graph->getVertices();
-        $vertexCount = count($vertices);
-
         $distances = [];
         $previousVertex = [];
         $previousEdge = [];
 
-        foreach ($vertices as $id => $vertex) {
+        foreach (array_keys($this->graph->getVertices()) as $id) {
             $distances[$id] = INF;
         }
 
         $distances[$sourceId] = 0;
 
-        // Step 1: Relax all edges (V - 1) times
+        $this->relaxAllEdges($distances, $previousVertex, $previousEdge);
+        $this->checkForNegativeCycles($distances);
+        $this->buildPath($destinationId, $previousVertex, $previousEdge);
+    }
+
+    /**
+     * Relax all edges in the graph up to (V - 1) times to find the shortest paths.
+     *
+     * @param array<string, float> $distances Passed by reference to update known shortest distances.
+     * @param array<string, string> $previousVertex Passed by reference to build the breadcrumb trail.
+     * @param array<string, string> $previousEdge Passed by reference to track the specific edge used.
+     * @return void
+     */
+    private function relaxAllEdges(array &$distances, array &$previousVertex, array &$previousEdge): void
+    {
+        $vertices = $this->graph->getVertices();
+        $vertexCount = count($vertices);
+
         for ($i = 1; $i < $vertexCount; $i++) {
             $updated = false;
 
@@ -231,29 +246,11 @@ class BellmanFordAlgorithm
                 }
 
                 $neighbors = $this->graph->getOutgoingNeighbors($uId);
-
-                foreach ($neighbors as $vId => $v) {
+                foreach (array_keys($neighbors) as $vId) {
                     $vId = (string) $vId;
-                    $edges = $this->graph->getOutgoingEdgesTo($uId, $vId);
 
-                    $bestEdgeId = null;
-                    $minEdgeWeight = INF;
-
-                    foreach ($edges as $edgeId => $edge) {
-                        if ($edge->getWeight() < $minEdgeWeight) {
-                            $minEdgeWeight = $edge->getWeight();
-                            $bestEdgeId = (string) $edgeId;
-                        }
-                    }
-
-                    if ($bestEdgeId !== null) {
-                        $newDist = $distances[$uId] + $minEdgeWeight;
-                        if ($newDist < $distances[$vId]) {
-                            $distances[$vId] = $newDist;
-                            $previousVertex[$vId] = $uId;
-                            $previousEdge[$vId] = $bestEdgeId;
-                            $updated = true;
-                        }
+                    if ($this->relaxSingleEdge($uId, $vId, $distances, $previousVertex, $previousEdge)) {
+                        $updated = true;
                     }
                 }
             }
@@ -263,20 +260,65 @@ class BellmanFordAlgorithm
                 break;
             }
         }
+    }
 
-        // Step 2: Check for negative-weight cycles
-        foreach ($vertices as $uId => $u) {
+    /**
+     * Evaluate the edges between two specific vertices to see if a cheaper path exists.
+     *
+     * @param string $uId The source vertex ID.
+     * @param string $vId The destination vertex ID.
+     * @param array<string, float> $distances Passed by reference.
+     * @param array<string, string> $previousVertex Passed by reference.
+     * @param array<string, string> $previousEdge Passed by reference.
+     * @return bool True if a shorter distance was found and updated, false otherwise.
+     */
+    private function relaxSingleEdge(string $uId, string $vId, array &$distances, array &$previousVertex, array &$previousEdge): bool
+    {
+        $edges = $this->graph->getOutgoingEdgesTo($uId, $vId);
+        $bestEdgeId = null;
+        $minEdgeWeight = INF;
+
+        foreach ($edges as $edgeId => $edge) {
+            if ($edge->getWeight() < $minEdgeWeight) {
+                $minEdgeWeight = $edge->getWeight();
+                $bestEdgeId = (string) $edgeId;
+            }
+        }
+
+        if ($bestEdgeId !== null) {
+            $newDist = $distances[$uId] + $minEdgeWeight;
+            if ($newDist < $distances[$vId]) {
+                $distances[$vId] = $newDist;
+                $previousVertex[$vId] = $uId;
+                $previousEdge[$vId] = $bestEdgeId;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Perform one final pass over the graph to mathematically prove the absence of negative-weight cycles.
+     *
+     * @param array<string, float> $distances The calculated shortest distances.
+     * @return void
+     * @throws LogicException If a negative cycle is detected, invalidating the shortest path.
+     */
+    private function checkForNegativeCycles(array $distances): void
+    {
+        foreach (array_keys($this->graph->getVertices()) as $uId) {
             if ($distances[$uId] === INF) {
                 continue;
             }
 
             $neighbors = $this->graph->getOutgoingNeighbors($uId);
-            foreach ($neighbors as $vId => $v) {
+            foreach (array_keys($neighbors) as $vId) {
                 $vId = (string) $vId;
                 $edges = $this->graph->getOutgoingEdgesTo($uId, $vId);
 
                 $minEdgeWeight = INF;
-                foreach ($edges as $edgeId => $edge) {
+                foreach ($edges as $edge) {
                     if ($edge->getWeight() < $minEdgeWeight) {
                         $minEdgeWeight = $edge->getWeight();
                     }
@@ -287,31 +329,44 @@ class BellmanFordAlgorithm
                 }
             }
         }
+    }
 
-        // Step 3: Backtrack and build the final Path
-        if (isset($previousVertex[$destinationId])) {
-            $pathVertices = [];
-            $pathEdges = [];
-            $curr = $destinationId;
-
-            while (isset($previousVertex[$curr])) {
-                array_unshift($pathVertices, $curr);
-                array_unshift($pathEdges, $previousEdge[$curr]);
-                $curr = $previousVertex[$curr];
-            }
-
-            array_unshift($pathVertices, $curr);
-
-            $path = new Path($this->graph);
-            $path->start($pathVertices[0]);
-
-            $pathEdgesCount = count($pathEdges);
-            for ($j = 0; $j < $pathEdgesCount; $j++) {
-                $path->addStep($pathVertices[$j + 1], $pathEdges[$j]);
-            }
-
-            $path->finish();
-            $this->results[] = $path;
+    /**
+     * Backtrack through the calculated previous vertices to construct the final Path object.
+     *
+     * @param string $destinationId The final target vertex ID.
+     * @param array<string, string> $previousVertex The breadcrumb trail of optimal vertex steps.
+     * @param array<string, string> $previousEdge The breadcrumb trail of optimal edge steps.
+     * @return void
+     * @throws Exception
+     */
+    private function buildPath(string $destinationId, array $previousVertex, array $previousEdge): void
+    {
+        if (!isset($previousVertex[$destinationId])) {
+            return;
         }
+
+        $pathVertices = [];
+        $pathEdges = [];
+        $curr = $destinationId;
+
+        while (isset($previousVertex[$curr])) {
+            array_unshift($pathVertices, $curr);
+            array_unshift($pathEdges, $previousEdge[$curr]);
+            $curr = $previousVertex[$curr];
+        }
+
+        array_unshift($pathVertices, $curr);
+
+        $path = new Path($this->graph);
+        $path->start($pathVertices[0]);
+
+        $edgesCount = count($pathEdges);
+        for ($j = 0; $j < $edgesCount; $j++) {
+            $path->addStep($pathVertices[$j + 1], $pathEdges[$j]);
+        }
+
+        $path->finish();
+        $this->results[] = $path;
     }
 }
