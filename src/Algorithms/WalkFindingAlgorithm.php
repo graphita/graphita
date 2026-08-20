@@ -32,6 +32,11 @@ class WalkFindingAlgorithm
      */
     private array $results = [];
 
+    /**
+     * @var bool
+     */
+    private bool $resultsSorted = false;
+
     const TRAVERSE_TYPE = Walk::class;
 
     /**
@@ -414,6 +419,7 @@ class WalkFindingAlgorithm
 
         $walk->finish();
         $this->results[] = $walk;
+        $this->resultsSorted = false;
     }
 
     /**
@@ -432,6 +438,8 @@ class WalkFindingAlgorithm
             return $walk1->getTotalWeight() <=> $walk2->getTotalWeight();
         });
 
+        $this->resultsSorted = true;
+
         return $this;
     }
 
@@ -444,7 +452,10 @@ class WalkFindingAlgorithm
             return null;
         }
 
-        $this->sortResults();
+        if (! $this->resultsSorted) {
+            $this->sortResults();
+        }
+
         return $this->results[0];
     }
 
@@ -457,7 +468,10 @@ class WalkFindingAlgorithm
             return null;
         }
 
-        $this->sortResults();
+        if (! $this->resultsSorted) {
+            $this->sortResults();
+        }
+
         return $this->results[$this->countResults() - 1];
     }
 
@@ -470,6 +484,7 @@ class WalkFindingAlgorithm
             $walk->calculateTotalWeight();
         }
 
+        $this->resultsSorted = false;
         $this->sortResults();
     }
 }
